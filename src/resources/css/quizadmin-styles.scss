@@ -1,0 +1,434 @@
+// Импорт стилей из quizadmin проекта
+// Цветовая палитра
+$light-gray: #d9d9d9;
+$primary-background: #2e2e30;
+$black-font: #303030;
+$restore: #FDE8E7;
+$restore-hover: #FDD2CF;
+$light-yellow: #FFFBEB;
+
+$color-000: #000000;
+$color-001: #6d6d6d;
+$dark-gray-btn: #5a5a5a;
+$white: #ffffff;
+$color-004: #1e1e1e;
+
+$light-blue: #0077FF1A;
+$blue-main: #0077ff;
+$blue-main-hover: #0068DF;
+$dsb-gray: #CDCDCD;
+
+$red: rgba(252, 63, 29, 0.66);
+$medium-gray: #757575;
+$light-gray-font: rgba(179, 179, 179, 0.74);
+
+$v-light-gray: #f5f5f5;
+$white-font: #f3f3f3;
+$color-014: #2c2c2c;
+$gray-text: #767676;
+$sds-color-text-brand-on-brand: #14AE5C;
+$success: #14AE5C;
+$error: #EC221F;
+$secondary-gray-hover: #E6E6E6;
+
+$tooltip: #e6e6e6;
+$color-018: #c00f0c;
+$color-019: #ededed;
+$color-020: #c3302e;
+$color-021: #00000033;
+$color-022: #ec221f;
+$color-023: #2aabee;
+$color-024: #229ed9;
+$color-025: #383838;
+$disabled-button: #cdcdcd;
+
+// Размеры кнопок
+$xs_button: 32px;
+$s_button: 40px;
+$m_button: 48px;
+$l_button: 50px;
+$xl_button: 6.5vh;
+
+// Размеры инпутов
+$s_input: 40px;
+$s_input_small: 32px;
+$s_input_medium: 48px;
+$s_input_large: 56px;
+
+// Адаптивные переменные
+$breakpoint: 1700px;
+$modal-big-breakpoint: 1280px;
+$modal-breakpoint: 1035px;
+$mobile-breakpoint: 820px;
+$tablet-breakpoint: 820px;
+$s-mobile-breakpoint: 420px;
+
+// Основные переменные
+$border-radius-main: 8px;
+$main-border: 1px solid $light-gray;
+$main-border-focus: 1px solid $blue-main;
+
+$s_card: 64px;
+$xs_card: 56px;
+$s_modal_width: 517px;
+
+// Типографика
+$sds-typography-title-page-size-small: 40px;
+$sds-typography-body-size-medium: 16px;
+$sds-typography-title-page-font-weight: 700;
+$sds-typography-body-font-weight-strong: 600;
+
+// Миксины типографики
+@mixin Heading {
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 120%;
+}
+
+@mixin TitlePage {
+  font-size: 32px;
+  font-weight: $sds-typography-title-page-font-weight;
+  line-height: 120%;
+  letter-spacing: -0.8px;
+}
+
+@mixin Subtitle {
+  font-size: 32px;
+  font-weight: $sds-typography-title-page-font-weight;
+  line-height: 120%;
+  letter-spacing: -2%;
+}
+
+@mixin SingleLine_BodyBase {
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 100%;
+}
+
+@mixin BodyBase {
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 140%;
+  letter-spacing: 0;
+}
+
+@mixin BodySmall {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 140%;
+  letter-spacing: 0;
+}
+
+@mixin Subheading {
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 120%;
+  letter-spacing: 0;
+}
+
+@mixin BodyStrong {
+  font-size: $sds-typography-body-size-medium;
+  font-style: normal;
+  font-weight: $sds-typography-body-font-weight-strong;
+  line-height: 140%;
+}
+
+// Утилитарные миксины
+@mixin Center {
+  display: flex;
+  align-items: center;
+}
+
+@mixin Drop-shadow_400 {
+  box-shadow: 0px 4px 4px -4px rgba(12, 12, 13, 0.05),
+  0px 16px 32px -4px rgba(12, 12, 13, 0.1);
+}
+
+@mixin Drop-shadow_200 {
+  box-shadow: 0px 1px 4px rgba(12, 12, 13, 0.1),
+  0px 1px 4px rgba(12, 12, 13, 0.05);
+}
+
+@mixin ScrollbarCustom {
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background-color: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: #d9d9d9;
+    border-radius: 8px;
+  }
+}
+
+// Адаптивные миксины
+@mixin responsive-display {
+  @media (max-width: $breakpoint) {
+    @content;
+  }
+}
+
+@mixin mobile-display {
+  @media (max-width: $mobile-breakpoint) {
+    @content;
+  }
+}
+
+@mixin modal-display {
+  @media (max-width: $modal-breakpoint) {
+    @content;
+  }
+}
+
+// Компоненты кнопок в стиле quizadmin
+.btn-main {
+  @include SingleLine_BodyBase;
+  @include Center;
+  justify-content: center;
+  width: 100%;
+  height: $m_button;
+  border: 1px solid $v-light-gray;
+  border-radius: $border-radius-main;
+  padding: 0 16px;
+  color: $white;
+  background-color: $blue-main;
+  cursor: pointer;
+  transition: all 100ms ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  @include mobile-display {
+    height: $s_button;
+  }
+
+  &:hover {
+    background-color: $blue-main-hover;
+    border-color: $blue-main-hover;
+  }
+
+  &:disabled {
+    background-color: $disabled-button;
+    border-color: $disabled-button;
+    color: $medium-gray;
+    cursor: not-allowed;
+  }
+
+  &.btn-secondary {
+    background-color: transparent;
+    color: $blue-main;
+    border-color: $blue-main;
+
+    &:hover {
+      background-color: $light-blue;
+    }
+  }
+
+  &.btn-gray {
+    background-color: $dsb-gray;
+    border-color: $dsb-gray;
+    color: $white;
+
+    &:hover {
+      background-color: $blue-main-hover;
+    }
+  }
+
+  &.btn-small {
+    height: $s_button;
+    padding: 0 12px;
+    font-size: 14px;
+  }
+
+  &.btn-large {
+    height: $l_button;
+    padding: 0 24px;
+  }
+}
+
+// Стили для инпутов
+.input-main {
+  @include BodyBase;
+  width: 100%;
+  height: $s_input;
+  border: $main-border;
+  border-radius: $border-radius-main;
+  padding: 0 16px;
+  background-color: $white;
+  color: $black-font;
+  transition: border-color 100ms ease;
+
+  &:focus {
+    outline: none;
+    border: $main-border-focus;
+  }
+
+  &:disabled {
+    background-color: $v-light-gray;
+    color: $medium-gray;
+    cursor: not-allowed;
+  }
+
+  &.input-small {
+    height: $s_input_small;
+    padding: 0 12px;
+    font-size: 14px;
+  }
+
+  &.input-large {
+    height: $s_input_large;
+    padding: 0 20px;
+  }
+
+  &::placeholder {
+    color: $medium-gray;
+  }
+}
+
+// Стили для карточек
+.card-main {
+  background-color: $white;
+  border: $main-border;
+  border-radius: $border-radius-main;
+  padding: 24px;
+  @include Drop-shadow_200;
+  transition: box-shadow 100ms ease;
+
+  &:hover {
+    @include Drop-shadow_400;
+  }
+
+  &.card-small {
+    padding: 16px;
+  }
+
+  &.card-large {
+    padding: 32px;
+  }
+}
+
+// Стили для навигации
+.nav-main {
+  background-color: $primary-background;
+  border-bottom: 1px solid $color-025;
+  padding: 0 24px;
+  height: 64px;
+  @include Center;
+  justify-content: space-between;
+
+  .nav-brand {
+    @include Heading;
+    color: $white;
+    text-decoration: none;
+  }
+
+  .nav-menu {
+    @include Center;
+    gap: 24px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+
+    .nav-item {
+      @include BodyBase;
+      color: $white-font;
+      text-decoration: none;
+      transition: color 100ms ease;
+
+      &:hover {
+        color: $white;
+      }
+
+      &.nav-item-active {
+        color: $blue-main;
+      }
+    }
+  }
+
+  .nav-user {
+    @include Center;
+    gap: 16px;
+    position: relative;
+
+    .user-menu {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      background-color: $white;
+      border: $main-border;
+      border-radius: $border-radius-main;
+      padding: 8px 0;
+      min-width: 200px;
+      @include Drop-shadow_400;
+      z-index: 1000;
+
+      .user-menu-item {
+        @include BodyBase;
+        display: block;
+        padding: 12px 16px;
+        color: $black-font;
+        text-decoration: none;
+        transition: background-color 100ms ease;
+
+        &:hover {
+          background-color: $v-light-gray;
+        }
+      }
+    }
+  }
+}
+
+// Стили для форм
+.form-main {
+  .form-group {
+    margin-bottom: 20px;
+
+    .form-label {
+      @include BodyStrong;
+      display: block;
+      margin-bottom: 8px;
+      color: $black-font;
+    }
+
+    .form-error {
+      @include BodySmall;
+      color: $error;
+      margin-top: 4px;
+    }
+  }
+
+  .form-actions {
+    @include Center;
+    gap: 16px;
+    margin-top: 32px;
+  }
+}
+
+// Адаптивные стили
+@include mobile-display {
+  .nav-main {
+    padding: 0 16px;
+    height: 56px;
+
+    .nav-menu {
+      gap: 16px;
+    }
+  }
+
+  .card-main {
+    padding: 16px;
+  }
+
+  .form-main .form-actions {
+    flex-direction: column;
+    gap: 12px;
+
+    .btn-main {
+      width: 100%;
+    }
+  }
+}
