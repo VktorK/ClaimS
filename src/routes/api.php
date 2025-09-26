@@ -4,6 +4,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\SellerController;
 
 /*
 |--------------------------------------------------------------------------
@@ -37,7 +39,29 @@ Route::middleware('auth:api')->prefix('profile')->group(function () {
     Route::post('/avatar', [ProfileController::class, 'uploadAvatar']);
 });
 
-// Публичные профили
+// Маршруты для продавцов
+Route::middleware('auth:api')->prefix('sellers')->group(function () {
+    Route::get('/', [SellerController::class, 'index']);
+    Route::post('/', [SellerController::class, 'store']);
+    Route::get('/statistics', [SellerController::class, 'statistics']);
+    Route::get('/{id}/products', [SellerController::class, 'getProducts']);
+    Route::get('/{id}', [SellerController::class, 'show']);
+    Route::put('/{id}', [SellerController::class, 'update']);
+    Route::delete('/{id}', [SellerController::class, 'destroy']);
+});
+
+// Маршруты для продуктов
+Route::middleware('auth:api')->prefix('products')->group(function () {
+    Route::get('/', [ProductController::class, 'index']);
+    Route::post('/', [ProductController::class, 'store']);
+    Route::get('/statistics', [ProductController::class, 'statistics']);
+    Route::get('/seller/{sellerId}', [ProductController::class, 'getBySeller']);
+    Route::get('/{id}', [ProductController::class, 'show']);
+    Route::put('/{id}', [ProductController::class, 'update']);
+    Route::delete('/{id}', [ProductController::class, 'destroy']);
+});
+
+// Публичные маршруты для профилей
 Route::get('profiles/{userId}/public', [ProfileController::class, 'publicProfile']);
 
 // Тестовый защищенный маршрут

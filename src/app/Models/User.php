@@ -91,6 +91,14 @@ class User extends Authenticatable implements JWTSubject
     }
 
     /**
+     * Связь с продуктами, которые создал пользователь
+     */
+    public function createdProducts(): HasMany
+    {
+        return $this->hasMany(Product::class, 'user_id');
+    }
+
+    /**
      * Связь с продуктами, которые продал пользователь
      */
     public function products(): HasMany

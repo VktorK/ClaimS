@@ -25,3 +25,13 @@ Route::get('/vue-app', function () {
 Route::get('/auth-demo', function () {
     return view('auth-demo');
 })->name('auth.demo');
+
+// Маршрут для перенаправления неавторизованных пользователей
+Route::get('/login', function () {
+    return view('vue-app');
+})->name('login');
+
+// Fallback маршрут для SPA - все остальные маршруты должны возвращать vue-app
+Route::get('{any}', function () {
+    return view('vue-app');
+})->where('any', '.*');

@@ -207,13 +207,13 @@ export default {
 
       // Проверяем размер файла (2MB)
       if (file.size > 2 * 1024 * 1024) {
-        alert('Размер файла не должен превышать 2MB')
+        console.error('Размер файла не должен превышать 2MB')
         return
       }
 
       // Проверяем тип файла
       if (!file.type.startsWith('image/')) {
-        alert('Пожалуйста, выберите изображение')
+        console.error('Пожалуйста, выберите изображение')
         return
       }
 
@@ -244,14 +244,14 @@ export default {
             detail: { user: this.user, authenticated: true }
           }))
 
-          alert('Аватар успешно загружен!')
+          console.log('Аватар успешно загружен!')
         }
       } catch (error) {
         console.error('Avatar upload error:', error)
         if (error.response && error.response.data.message) {
-          alert('Ошибка при загрузке аватара: ' + error.response.data.message)
+          console.error('Ошибка при загрузке аватара: ' + error.response.data.message)
         } else {
-          alert('Произошла ошибка при загрузке аватара')
+          console.error('Произошла ошибка при загрузке аватара')
         }
       } finally {
         this.uploadingAvatar = false

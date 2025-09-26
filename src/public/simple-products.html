@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Продукты</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            background: #f5f5f5;
+        }
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .product {
+            background: white;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .product h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        .product p {
+            margin: 5px 0;
+            color: #666;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        .error {
+            color: red;
+            padding: 20px;
+            background: #ffe6e6;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        button {
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .logout {
+            background: #dc3545;
+        }
+        .logout:hover {
+            background: #c82333;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 5px;
+            color: white;
+            font-weight: bold;
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        .notification.success {
+            background: #28a745;
+        }
+        
+        .notification.error {
+            background: #dc3545;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Мои продукты</h1>
+        <button onclick="loadProducts()">Обновить</button>
+        <button onclick="logout()" class="logout">Выйти</button>
+        <button onclick="createProduct()">Создать продукт</button>
+    </div>
+    
+    <div id="content">
+        <div class="loading">Загрузка продуктов...</div>
+    </div>
+
+    <script>
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+        
+        async function loadProducts() {
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                document.getElementById('content').innerHTML = '<div class="error">Не авторизован. <a href="/simple-login.html">Войти</a></div>';
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/products', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayProducts(data.data);
+                } else {
+                    document.getElementById('content').innerHTML = `<div class="error">Ошибка: ${data.message}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('content').innerHTML = `<div class="error">Ошибка: ${error.message}</div>`;
+            }
+        }
+        
+        function displayProducts(products) {
+            const content = document.getElementById('content');
+            
+            if (products.length === 0) {
+                content.innerHTML = '<div class="error">Продукты не найдены</div>';
+                return;
+            }
+            
+            content.innerHTML = products.map(product => `
+                <div class="product">
+                    <h3>${product.title}</h3>
+                    <p><strong>Модель:</strong> ${product.model || 'Не указана'}</p>
+                    <p><strong>Цена:</strong> ${product.formatted_price}</p>
+                    <p><strong>Дата покупки:</strong> ${product.date_of_buying}</p>
+                    <p><strong>Серийный номер:</strong> ${product.serial_number || 'Не указан'}</p>
+                    <p><strong>Продавец ID:</strong> ${product.seller_id}</p>
+                </div>
+            `).join('');
+        }
+        
+        function logout() {
+            localStorage.clear();
+            window.location.href = '/simple-login.html';
+        }
+        
+        function createProduct() {
+            const title = prompt('Название продукта:');
+            if (!title) return;
+            
+            const model = prompt('Модель:');
+            const price = prompt('Цена:');
+            const date = prompt('Дата покупки (YYYY-MM-DD):');
+            const serial = prompt('Серийный номер (необязательно):');
+            
+            const productData = {
+                title: title,
+                model: model || '',
+                price: parseFloat(price) || 0,
+                date_of_buying: date || new Date().toISOString().split('T')[0],
+                serial_number: serial || '',
+                seller_id: '01998588-45ff-73de-8136-38a6869f9588' // Используем существующего продавца
+            };
+            
+            const token = localStorage.getItem('token');
+            
+            fetch('/api/products', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(productData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Продукт создан!', 'success');
+                    loadProducts();
+                } else {
+                    showNotification('Ошибка: ' + data.message, 'error');
+                }
+            })
+            .catch(error => {
+                showNotification('Ошибка: ' + error.message, 'error');
+            });
+        }
+        
+        // Загружаем продукты при загрузке страницы
+        window.onload = loadProducts;
+    </script>
+</body>
+</html>

@@ -18,6 +18,7 @@ class Product extends BaseModel
         'date_of_buying',
         'seller_id',
         'claim_id',
+        'user_id',
     ];
 
     /**
@@ -29,21 +30,29 @@ class Product extends BaseModel
     ];
 
     /**
-     * Связь с продавцом (пользователем)
+     * Связь с пользователем (создатель продукта)
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /**
+     * Связь с продавцом
      */
     public function seller(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'seller_id');
+        return $this->belongsTo(Seller::class, 'seller_id');
     }
 
     /**
      * Связь с претензией
      * Примечание: Модель Claim будет создана позже
      */
-    public function claim(): BelongsTo
-    {
-        return $this->belongsTo(Claim::class, 'claim_id');
-    }
+    // public function claim(): BelongsTo
+    // {
+    //     return $this->belongsTo(Claim::class, 'claim_id');
+    // }
 
     /**
      * Получить отформатированную цену

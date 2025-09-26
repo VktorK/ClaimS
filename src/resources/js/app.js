@@ -11,6 +11,10 @@ import Register from './components/Register.vue';
 import Profile from './components/Profile.vue';
 import EditProfile from './components/EditProfile.vue';
 
+// Импорт страниц для управления
+import Products from './pages/Products.vue';
+import Sellers from './pages/Sellers.vue';
+
 // Настройка роутера
 const routes = [
     { path: '/', component: Home },
@@ -19,6 +23,21 @@ const routes = [
     { path: '/register', component: Register },
     { path: '/profile', component: Profile },
     { path: '/profile/edit', component: EditProfile },
+    
+    // Маршруты для управления продуктами и продавцами
+    { 
+        path: '/products', 
+        component: Products,
+        meta: { requiresAuth: true, title: 'Продукты' }
+    },
+    { 
+        path: '/sellers', 
+        component: Sellers,
+        meta: { requiresAuth: true, title: 'Продавцы' }
+    },
+    
+    // Редирект с dashboard на главную (можно изменить позже)
+    { path: '/dashboard', redirect: '/' },
 ];
 
 const router = createRouter({
@@ -26,7 +45,45 @@ const router = createRouter({
     routes,
 });
 
+// Проверка аутентификации для защищенных маршрутов
+router.beforeEach((to, from, next) => {
+    const token = localStorage.getItem('token');
+    
+    if (to.matched.some(record => record.meta.requiresAuth)) {
+        if (!token) {
+            next('/login');
+        } else {
+            next();
+        }
+    } else {
+        next();
+    }
+    
+    // Обновление заголовка страницы
+    if (to.meta.title) {
+        document.title = `${to.meta.title} - Claims System`;
+    }
+});
+
 // Создание Vue приложения
 const app = createApp(App);
+
+// Добавим глобальную систему уведомлений
+app.config.globalProperties.$toast = {
+    success(message) {
+        console.log('✅ Success:', message);
+        // Здесь можно добавить более сложную систему уведомлений
+        // Toast уведомления уже настроены в компонентах
+    },
+    error(message) {
+        console.error('❌ Error:', message);
+        // Toast уведомления уже настроены в компонентах
+    },
+    info(message) {
+        console.log('ℹ️ Info:', message);
+        // Toast уведомления уже настроены в компонентах
+    }
+};
+
 app.use(router);
 app.mount('#app');

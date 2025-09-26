@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест продуктов</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .product { border: 1px solid #ddd; padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .error { color: red; }
+        .success { color: green; }
+        button { padding: 10px 20px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Тест отображения продуктов</h1>
+    
+    <div>
+        <button onclick="login()">Войти в систему</button>
+        <button onclick="loadProducts()">Загрузить продукты</button>
+        <button onclick="clearStorage()">Очистить хранилище</button>
+    </div>
+    
+    <div id="status"></div>
+    <div id="products"></div>
+
+    <script>
+        const API_BASE = '/api';
+        
+        function showStatus(message, isError = false) {
+            const status = document.getElementById('status');
+            status.innerHTML = `<div class="${isError ? 'error' : 'success'}">${message}</div>`;
+        }
+        
+        async function login() {
+            try {
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'gdfg@fgdg.ru',
+                        password: 'password'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    localStorage.setItem('token', data.data.token);
+                    localStorage.setItem('user', JSON.stringify(data.data.user));
+                    showStatus('Успешный вход в систему!');
+                } else {
+                    showStatus('Ошибка входа: ' + data.message, true);
+                }
+            } catch (error) {
+                showStatus('Ошибка: ' + error.message, true);
+            }
+        }
+        
+        async function loadProducts() {
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                showStatus('Сначала войдите в систему!', true);
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/products`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayProducts(data.data);
+                    showStatus(`Загружено ${data.data.length} продуктов`);
+                } else {
+                    showStatus('Ошибка загрузки: ' + data.message, true);
+                }
+            } catch (error) {
+                showStatus('Ошибка: ' + error.message, true);
+            }
+        }
+        
+        function displayProducts(products) {
+            const container = document.getElementById('products');
+            
+            if (products.length === 0) {
+                container.innerHTML = '<p>Продукты не найдены</p>';
+                return;
+            }
+            
+            container.innerHTML = products.map(product => `
+                <div class="product">
+                    <h3>${product.title}</h3>
+                    <p><strong>Модель:</strong> ${product.model || 'Не указана'}</p>
+                    <p><strong>Цена:</strong> ${product.formatted_price}</p>
+                    <p><strong>Дата покупки:</strong> ${product.date_of_buying}</p>
+                    <p><strong>Серийный номер:</strong> ${product.serial_number || 'Не указан'}</p>
+                </div>
+            `).join('');
+        }
+        
+        function clearStorage() {
+            localStorage.clear();
+            showStatus('Хранилище очищено');
+            document.getElementById('products').innerHTML = '';
+        }
+        
+        // Автоматически попробуем войти при загрузке страницы
+        window.onload = function() {
+            const token = localStorage.getItem('token');
+            if (token) {
+                showStatus('Токен найден, можно загружать продукты');
+            } else {
+                showStatus('Токен не найден, нажмите "Войти в систему"');
+            }
+        };
+    </script>
+</body>
+</html>

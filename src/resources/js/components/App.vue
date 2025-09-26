@@ -10,6 +10,16 @@
           <router-link to="/about" class="nav-item">О нас</router-link>
         </li>
 
+        <!-- Показываем управление данными если пользователь авторизован -->
+        <template v-if="isAuthenticated">
+          <li>
+            <router-link to="/products" class="nav-item">Товары</router-link>
+          </li>
+          <li>
+            <router-link to="/sellers" class="nav-item">Продавцы</router-link>
+          </li>
+        </template>
+
         <!-- Показываем кнопки авторизации если пользователь не авторизован -->
         <template v-if="!isAuthenticated">
           <li>
@@ -74,7 +84,7 @@ export default {
     checkAuthStatus() {
       const token = localStorage.getItem('token')
       const user = localStorage.getItem('user')
-      
+
       if (token && user) {
         this.isAuthenticated = true
         this.user = JSON.parse(user)
@@ -85,12 +95,12 @@ export default {
       localStorage.removeItem('user')
       this.isAuthenticated = false
       this.user = null
-      
+
       // Глобальное событие для обновления состояния авторизации
       window.dispatchEvent(new CustomEvent('auth-updated', {
         detail: { user: null, authenticated: false }
       }))
-      
+
       this.$router.push('/')
     },
     updateAuthStatus() {

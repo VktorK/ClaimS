@@ -1,0 +1,589 @@
+<template>
+  <div class="product-list">
+    <div class="header">
+      <h2>Список товаров</h2>
+      <div class="actions">
+        <input 
+          v-model="search" 
+          @input="searchProducts"
+          type="text" 
+          placeholder="Поиск по названию или серийному номеру..."
+          class="search-input"
+        />
+        <button @click="openCreateModal" class="btn btn-primary">
+          Добавить товар
+        </button>
+      </div>
+    </div>
+
+    <div v-if="loading" class="loading">
+      ⏳ Загрузка...
+    </div>
+
+    <div v-else>
+      <div class="filters">
+        <select v-model="selectedSeller" @change="filterBySeller" class="filter-select">
+          <option value="">Все продавцы</option>
+          <option v-for="seller in sellers" :key="seller.id" :value="seller.id">
+            {{ seller.title }}
+          </option>
+        </select>
+        
+        <select v-model="sortBy" @change="sortProducts" class="filter-select">
+          <option value="created_at">По дате создания</option>
+          <option value="title">По названию</option>
+          <option value="price">По цене</option>
+          <option value="date_of_buying">По дате покупки</option>
+        </select>
+        
+        <select v-model="sortOrder" @change="sortProducts" class="filter-select">
+          <option value="desc">По убыванию</option>
+          <option value="asc">По возрастанию</option>
+        </select>
+      </div>
+
+      <div class="products-grid">
+        <div v-for="product in products" :key="product.id" class="product-card" @click="viewProductDetails(product)">
+          <div class="product-header">
+            <h3 class="product-title" :title="product.title">{{ product.title }}</h3>
+            <div class="product-actions" @click.stop>
+              <button @click="editProduct(product)" class="btn btn-sm btn-warning" title="Редактировать">
+                ✏️
+              </button>
+              <button @click="deleteProduct(product)" class="btn btn-sm btn-danger" title="Удалить">
+                🗑️
+              </button>
+            </div>
+          </div>
+          
+          <div class="product-info">
+            <div class="info-item" v-if="product.model">
+              📱 <span>{{ product.model }}</span>
+            </div>
+            
+            <div class="info-item" v-if="product.serial_number">
+              🔢 <span>Серийный номер: {{ product.serial_number }}</span>
+            </div>
+            
+            <div class="info-item" v-if="product.price">
+              💰 <span>Цена: {{ product.formatted_price }}</span>
+            </div>
+            
+            <div class="info-item" v-if="product.seller">
+              🏪 <span>Продавец: {{ product.seller.title }}</span>
+            </div>
+          </div>
+          
+          <div class="product-footer">
+            <span class="purchase-date">
+              Куплен: {{ formatDate(product.date_of_buying) }}
+            </span>
+            <div class="product-badges">
+              <span v-if="product.serial_number" class="badge badge-success">С серийным номером</span>
+              <span v-else class="badge badge-secondary">Без серийного номера</span>
+            </div>
+          </div>
+        </div>
+        
+        <div v-if="products.length === 0" class="no-data">
+          📦
+          <p>Товары не найдены</p>
+        </div>
+      </div>
+
+      <div class="pagination" v-if="totalPages > 1">
+        <button 
+          @click="goToPage(currentPage - 1)" 
+          :disabled="currentPage === 1"
+          class="btn btn-sm"
+        >
+          <i class="fas fa-chevron-left"></i>
+        </button>
+        
+        <span class="page-info">
+          Страница {{ currentPage }} из {{ totalPages }}
+        </span>
+        
+        <button 
+          @click="goToPage(currentPage + 1)" 
+          :disabled="currentPage === totalPages"
+          class="btn btn-sm"
+        >
+          <i class="fas fa-chevron-right"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Modal для создания/редактирования продукта -->
+    <ProductForm 
+      v-if="showModal"
+      :product="selectedProduct"
+      :sellers="sellers"
+      @close="closeModal"
+      @saved="onProductSaved"
+      @seller-created="onSellerCreated"
+    />
+
+    <!-- Форма просмотра товара -->
+    <ProductViewForm 
+      v-if="showViewForm"
+      :product="selectedProduct"
+      @close="closeViewForm"
+      @edit="editProduct"
+      @delete="deleteProduct"
+      @edit-seller="editSellerFromProduct"
+      @seller-updated="onSellerUpdated"
+    />
+  </div>
+</template>
+
+<script>
+import { ProductAPI, SellerAPI, AuthAPI } from '../services/api.js'
+import ProductForm from './ProductForm.vue'
+import ProductViewForm from './ProductViewForm.vue'
+
+export default {
+  name: 'ProductList',
+  components: {
+    ProductForm,
+    ProductViewForm
+  },
+  data() {
+    return {
+      products: [],
+      sellers: [],
+      loading: false,
+      search: '',
+      selectedSeller: '',
+      sortBy: 'created_at',
+      sortOrder: 'desc',
+      currentPage: 1,
+      totalPages: 1,
+      showModal: false,
+      showViewForm: false,
+      selectedProduct: null
+    }
+  },
+  mounted() {
+    this.loadProducts()
+    this.loadSellers()
+  },
+  methods: {
+    async loadProducts() {
+      this.loading = true
+      
+      try {
+        const params = {
+          search: this.search,
+          seller_id: this.selectedSeller,
+          sort_by: this.sortBy,
+          sort_order: this.sortOrder,
+          page: this.currentPage
+        }
+        
+        const response = await ProductAPI.getProducts(params)
+        
+        if (response.success) {
+          this.products = Array.isArray(response.data) ? response.data : response.data.data
+          this.totalPages = response.data.last_page || 1
+        } else {
+          console.error('Ошибка загрузки продуктов')
+        }
+      } catch (error) {
+        console.error('Error loading products:', error)
+        
+        // Проверяем, если это ошибка авторизации
+        if (error.message === 'Authentication failed') {
+          this.$router.push('/login')
+          return
+        }
+        
+        console.error('Ошибка загрузки продуктов')
+      } finally {
+        this.loading = false
+      }
+    },
+    
+    async loadSellers() {
+      try {
+        const response = await SellerAPI.getSellers()
+        if (response.success) {
+          this.sellers = Array.isArray(response.data) ? response.data : response.data.data
+        }
+      } catch (error) {
+        console.error('Error loading sellers:', error)
+        
+        // Проверяем, если это ошибка авторизации
+        if (error.message === 'Authentication failed') {
+          this.$router.push('/login')
+          return
+        }
+      }
+    },
+    
+    searchProducts() {
+      this.currentPage = 1
+      this.loadProducts()
+    },
+    
+    filterBySeller() {
+      this.currentPage = 1
+      this.loadProducts()
+    },
+    
+    sortProducts() {
+      this.currentPage = 1
+      this.loadProducts()
+    },
+    
+    goToPage(page) {
+      if (page >= 1 && page <= this.totalPages) {
+        this.currentPage = page
+        this.loadProducts()
+      }
+    },
+    
+    openCreateModal() {
+      this.selectedProduct = null
+      this.showModal = true
+    },
+    
+    editProduct(product) {
+      // Устанавливаем selectedProduct
+      this.selectedProduct = product
+      // Скрываем форму просмотра
+      this.showViewForm = false
+      // Открываем форму редактирования
+      this.showModal = true
+    },
+    
+    async deleteProduct(product) {
+      try {
+        const response = await ProductAPI.deleteProduct(product.id)
+        if (response.success) {
+          console.log('Товар успешно удален')
+          this.loadProducts()
+        } else {
+          console.error(response.message || 'Ошибка удаления товара')
+        }
+      } catch (error) {
+        console.error('Error deleting product:', error)
+        console.error('Ошибка удаления товара')
+      }
+    },
+    
+    closeModal() {
+      this.showModal = false
+      this.selectedProduct = null
+    },
+    
+    viewProductDetails(product) {
+      this.selectedProduct = product
+      this.showViewForm = true
+    },
+    
+    closeViewForm() {
+      this.showViewForm = false
+      // НЕ сбрасываем selectedProduct автоматически
+      // this.selectedProduct = null
+    },
+    
+    onProductSaved() {
+      this.closeModal()
+      this.loadProducts()
+    },
+    
+    onSellerCreated(newSeller) {
+      // Добавляем нового продавца в список
+      this.sellers.push(newSeller)
+    },
+    
+    editSellerFromProduct(seller) {
+      // Простое решение - открываем форму редактирования продавца
+      // Пока что просто выводим в консоль
+      console.log('Редактирование продавца:', seller)
+      // TODO: Реализовать открытие формы редактирования продавца
+    },
+    
+    onSellerUpdated() {
+      // Обновляем списки после редактирования продавца
+      this.loadSellers()
+      this.loadProducts()
+    },
+    
+    formatDate(date) {
+      if (!date) return '-'
+      return new Date(date).toLocaleDateString('ru-RU')
+    }
+  }
+}
+</script>
+
+<style scoped>
+.product-list {
+  padding: 20px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.header h2 {
+  margin: 0;
+  color: #333;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.search-input {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  width: 300px;
+}
+
+.filters {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.filter-select {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: white;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+}
+
+.loading {
+  font-size: 18px;
+}
+
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 20px;
+}
+
+.product-card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.product-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.product-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 20px 15px 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.product-title {
+  margin: 0;
+  font-size: 18px;
+  color: #333;
+  flex: 1;
+}
+
+.product-actions {
+  display: flex;
+  gap: 5px;
+}
+
+.product-actions .btn {
+  min-width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.product-info {
+  padding: 15px 20px;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  color: #666;
+}
+
+.info-item:last-child {
+  margin-bottom: 0;
+}
+
+.info-item i {
+  width: 16px;
+  color: #999;
+  font-size: 16px;
+}
+
+.product-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  border-top: 1px solid #eee;
+  background: #f8f9fa;
+}
+
+.purchase-date {
+  font-size: 12px;
+  color: #999;
+}
+
+.product-badges {
+  display: flex;
+  gap: 5px;
+}
+
+.badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.badge-success {
+  background: #d4edda;
+  color: #155724;
+}
+
+.badge-secondary {
+  background: #e2e3e5;
+  color: #6c757d;
+}
+
+.no-data {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 60px;
+  color: #666;
+  font-size: 48px;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.page-info {
+  color: #666;
+  font-size: 14px;
+}
+
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: #007bff;
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #0056b3;
+}
+
+.btn-warning {
+  background: #ffc107;
+  color: #212529;
+}
+
+.btn-warning:hover {
+  background: #e0a800;
+}
+
+.btn-danger {
+  background: #dc3545;
+  color: white;
+}
+
+.btn-danger:hover {
+  background: #c82333;
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.product-card {
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .actions {
+    align-self: flex-end;
+  }
+  
+  .search-input {
+    width: 100%;
+  }
+  
+  .products-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  
+  .product-card {
+    margin: 0 10px;
+  }
+  
+  .product-header {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .product-actions {
+    align-self: flex-end;
+  }
+}
+</style>
