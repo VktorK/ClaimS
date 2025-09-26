@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Product extends BaseModel
 {
@@ -47,12 +48,27 @@ class Product extends BaseModel
 
     /**
      * Связь с претензией
-     * Примечание: Модель Claim будет создана позже
      */
-    // public function claim(): BelongsTo
-    // {
-    //     return $this->belongsTo(Claim::class, 'claim_id');
-    // }
+    public function claims(): HasMany
+    {
+        return $this->hasMany(Claim::class, 'product_id');
+    }
+
+    /**
+     * Получить количество претензий
+     */
+    public function getClaimsCountAttribute(): int
+    {
+        return $this->claims()->count();
+    }
+
+    /**
+     * Получить количество активных претензий
+     */
+    public function getActiveClaimsCountAttribute(): int
+    {
+        return $this->claims()->whereIn('status', ['pending', 'in_progress'])->count();
+    }
 
     /**
      * Получить отформатированную цену

@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SellerController;
+use App\Http\Controllers\ClaimController;
 
 /*
 |--------------------------------------------------------------------------
@@ -59,6 +60,17 @@ Route::middleware('auth:api')->prefix('products')->group(function () {
     Route::get('/{id}', [ProductController::class, 'show']);
     Route::put('/{id}', [ProductController::class, 'update']);
     Route::delete('/{id}', [ProductController::class, 'destroy']);
+});
+
+// Маршруты для претензий
+Route::middleware('auth:api')->prefix('claims')->group(function () {
+    Route::get('/', [ClaimController::class, 'index']);
+    Route::post('/', [ClaimController::class, 'store']);
+    Route::get('/statistics', [ClaimController::class, 'statistics']);
+    Route::get('/product/{productId}', [ClaimController::class, 'getClaimsByProduct']);
+    Route::get('/{id}', [ClaimController::class, 'show']);
+    Route::put('/{id}', [ClaimController::class, 'update']);
+    Route::delete('/{id}', [ClaimController::class, 'destroy']);
 });
 
 // Публичные маршруты для профилей

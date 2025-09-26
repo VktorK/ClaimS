@@ -245,7 +245,7 @@ export default {
   methods: {
     async loadProfile() {
       try {
-        const token = localStorage.getItem('token')
+        const token = typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null
         if (!token) {
           this.$router.push('/login')
           return
@@ -290,7 +290,7 @@ export default {
       this.successMessage = ''
 
       try {
-        const token = localStorage.getItem('token')
+        const token = typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null
         if (!token) {
           this.$router.push('/login')
           return
@@ -305,7 +305,7 @@ export default {
         if (response.data.success) {
           this.successMessage = 'Профиль успешно обновлен!'
           const userData = {
-            ...JSON.parse(localStorage.getItem('user')),
+            ...JSON.parse(typeof localStorage !== 'undefined' ? localStorage.getItem('user') : '{}'),
             profile: response.data.data.profile
           }
           localStorage.setItem('user', JSON.stringify(userData))

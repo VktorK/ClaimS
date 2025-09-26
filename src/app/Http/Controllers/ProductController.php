@@ -18,7 +18,7 @@ class ProductController extends Controller
     {
         $user = auth()->user();
         
-        $query = Product::with(['seller', 'user'])
+        $query = Product::with(['seller', 'user', 'claims'])
             ->where('user_id', $user->id);
 
         // Фильтрация по продавцу

@@ -14,6 +14,7 @@ import EditProfile from './components/EditProfile.vue';
 // Импорт страниц для управления
 import Products from './pages/Products.vue';
 import Sellers from './pages/Sellers.vue';
+import Claims from './pages/Claims.vue';
 
 // Настройка роутера
 const routes = [
@@ -35,6 +36,11 @@ const routes = [
         component: Sellers,
         meta: { requiresAuth: true, title: 'Продавцы' }
     },
+    { 
+        path: '/claims', 
+        component: Claims,
+        meta: { requiresAuth: true, title: 'Претензии' }
+    },
     
     // Редирект с dashboard на главную (можно изменить позже)
     { path: '/dashboard', redirect: '/' },
@@ -47,7 +53,7 @@ const router = createRouter({
 
 // Проверка аутентификации для защищенных маршрутов
 router.beforeEach((to, from, next) => {
-    const token = localStorage.getItem('token');
+    const token = typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null;
     
     if (to.matched.some(record => record.meta.requiresAuth)) {
         if (!token) {

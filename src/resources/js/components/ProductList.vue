@@ -47,6 +47,9 @@
           <div class="product-header">
             <h3 class="product-title" :title="product.title">{{ product.title }}</h3>
             <div class="product-actions" @click.stop>
+              <button @click="viewProductDetails(product)" class="btn btn-sm btn-info" title="Просмотр">
+                👁️
+              </button>
               <button @click="editProduct(product)" class="btn btn-sm btn-warning" title="Редактировать">
                 ✏️
               </button>
@@ -74,15 +77,21 @@
             </div>
           </div>
           
-          <div class="product-footer">
-            <span class="purchase-date">
-              Куплен: {{ formatDate(product.date_of_buying) }}
-            </span>
-            <div class="product-badges">
-              <span v-if="product.serial_number" class="badge badge-success">С серийным номером</span>
-              <span v-else class="badge badge-secondary">Без серийного номера</span>
-            </div>
-          </div>
+                 <div class="product-footer">
+                   <span class="purchase-date">
+                     Куплен: {{ formatDate(product.date_of_buying) }}
+                   </span>
+                   <div class="product-badges">
+                     <span v-if="product.serial_number" class="badge badge-success">С серийным номером</span>
+                     <span v-else class="badge badge-secondary">Без серийного номера</span>
+                     <span v-if="product.claims_count > 0" class="badge badge-warning">
+                       ⚠️ Претензий: {{ product.claims_count }}
+                     </span>
+                     <span v-if="product.active_claims_count > 0" class="badge badge-danger">
+                       🔴 Активных: {{ product.active_claims_count }}
+                     </span>
+                   </div>
+                 </div>
         </div>
         
         <div v-if="products.length === 0" class="no-data">
@@ -480,6 +489,16 @@ export default {
   color: #6c757d;
 }
 
+.badge-warning {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.badge-danger {
+  background: #f8d7da;
+  color: #721c24;
+}
+
 .no-data {
   grid-column: 1 / -1;
   text-align: center;
@@ -534,6 +553,15 @@ export default {
 
 .btn-warning:hover {
   background: #e0a800;
+}
+
+.btn-info {
+  background: #17a2b8;
+  color: white;
+}
+
+.btn-info:hover {
+  background: #138496;
 }
 
 .btn-danger {

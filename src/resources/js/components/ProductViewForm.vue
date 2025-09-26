@@ -69,17 +69,29 @@
               />
             </div>
 
-            <div class="form-group" v-if="localProduct.seller">
-              <label for="seller_title">Продавец</label>
-              <input 
-                id="seller_title"
-                :value="localProduct.seller.title" 
-                type="text" 
-                class="form-control seller-field"
-                readonly
-                @click="showSellerDetails"
-              />
-            </div>
+                   <div class="form-group" v-if="localProduct.seller">
+                     <label for="seller_title">Продавец</label>
+                     <input 
+                       id="seller_title"
+                       :value="localProduct.seller.title" 
+                       type="text" 
+                       class="form-control seller-field"
+                       readonly
+                       @click="showSellerDetails"
+                     />
+                   </div>
+
+                   <div class="form-group" v-if="localProduct.claims_count > 0">
+                     <label for="claims_info">Претензии</label>
+                     <div class="claims-info">
+                       <div class="claims-summary">
+                         <span class="claims-total">Всего претензий: {{ localProduct.claims_count }}</span>
+                         <span v-if="localProduct.active_claims_count > 0" class="claims-active">
+                           Активных: {{ localProduct.active_claims_count }}
+                         </span>
+                       </div>
+                     </div>
+                   </div>
           </div>
         </div>
       </div>
@@ -371,6 +383,29 @@ export default {
 
 .seller-field:hover {
   background: #e3f2fd;
+}
+
+.claims-info {
+  padding: 10px;
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+}
+
+.claims-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.claims-total {
+  font-weight: 600;
+  color: #333;
+}
+
+.claims-active {
+  color: #dc3545;
+  font-weight: 500;
 }
 
 textarea.form-control {

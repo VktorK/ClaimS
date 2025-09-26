@@ -130,7 +130,7 @@ export default {
     async loadProfile() {
       this.loading = true
       try {
-        const token = localStorage.getItem('token')
+        const token = typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null
         if (!token) {
           this.$router.push('/login')
           return
@@ -220,7 +220,7 @@ export default {
       this.uploadingAvatar = true
 
       try {
-        const token = localStorage.getItem('token')
+        const token = typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null
         const formData = new FormData()
         formData.append('avatar', file)
 

@@ -18,6 +18,9 @@
           <li>
             <router-link to="/sellers" class="nav-item">Продавцы</router-link>
           </li>
+          <li>
+            <router-link to="/claims" class="nav-item">Претензии</router-link>
+          </li>
         </template>
 
         <!-- Показываем кнопки авторизации если пользователь не авторизован -->
@@ -82,6 +85,8 @@ export default {
         },
   methods: {
     checkAuthStatus() {
+      if (typeof localStorage === 'undefined') return
+      
       const token = localStorage.getItem('token')
       const user = localStorage.getItem('user')
 
@@ -91,8 +96,10 @@ export default {
       }
     },
     logout() {
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+      }
       this.isAuthenticated = false
       this.user = null
 

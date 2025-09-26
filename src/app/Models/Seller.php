@@ -62,8 +62,8 @@ class Seller extends BaseModel
      */
     public function getShortTitleAttribute(): string
     {
-        return strlen($this->title) > 50 
-            ? substr($this->title, 0, 50) . '...' 
+        return mb_strlen($this->title) > 50 
+            ? mb_substr($this->title, 0, 50) . '...' 
             : $this->title;
     }
 }

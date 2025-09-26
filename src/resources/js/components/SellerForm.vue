@@ -10,6 +10,51 @@
       
       <div class="modal-body">
         <form @submit.prevent="submitForm">
+          <!-- Поиск организации по ИНН -->
+          <div class="form-group">
+            <label for="inn_search">Поиск организации по ИНН</label>
+            <div class="inn-search-container">
+              <input 
+                id="inn_search"
+                v-model="innSearch" 
+                type="text" 
+                class="form-control"
+                placeholder="Введите ИНН для поиска организации"
+                @input="searchOrganization"
+              />
+              <button 
+                type="button" 
+                @click="searchOrganization" 
+                class="btn btn-info btn-sm search-btn"
+                :disabled="!innSearch || innSearch.length < 10"
+              >
+                🔍 Поиск
+              </button>
+            </div>
+            <div v-if="searchLoading" class="search-loading">
+              ⏳ Поиск организации...
+            </div>
+            <div v-if="searchError" class="search-error">
+              ❌ {{ searchError }}
+            </div>
+            <div v-if="foundOrganization" class="found-organization">
+              <div class="org-info">
+                <h4>Найденная организация:</h4>
+                <p><strong>Название:</strong> {{ foundOrganization.name }}</p>
+                <p v-if="foundOrganization.address"><strong>Адрес:</strong> {{ foundOrganization.address }}</p>
+                <p v-if="foundOrganization.inn"><strong>ИНН:</strong> {{ foundOrganization.inn }}</p>
+                <p v-if="foundOrganization.ogrn"><strong>ОГРН:</strong> {{ foundOrganization.ogrn }}</p>
+              </div>
+              <button 
+                type="button" 
+                @click="useFoundOrganization" 
+                class="btn btn-success btn-sm"
+              >
+                ✅ Использовать данные
+              </button>
+            </div>
+          </div>
+
           <div class="form-group">
             <label for="title">Название *</label>
             <input 
@@ -78,6 +123,7 @@
 
 <script>
 import { SellerAPI } from '../services/api.js'
+import { DaDataAPI } from '../services/dadata.js'
 
 export default {
   name: 'SellerForm',
@@ -96,7 +142,11 @@ export default {
         ogrn: ''
       },
       errors: {},
-      loading: false
+      loading: false,
+      innSearch: '',
+      searchLoading: false,
+      searchError: '',
+      foundOrganization: null
     }
   },
   computed: {
@@ -148,6 +198,45 @@ export default {
         this.$toast.error('Произошла ошибка при отправке формы')
       } finally {
         this.loading = false
+      }
+    },
+    
+    async searchOrganization() {
+      if (!this.innSearch || this.innSearch.length < 10) {
+        return
+      }
+      
+      this.searchLoading = true
+      this.searchError = ''
+      this.foundOrganization = null
+      
+      try {
+        const response = await DaDataAPI.findOrganizationByInn(this.innSearch)
+        const organization = DaDataAPI.processOrganizationData(response)
+        
+        if (organization) {
+          this.foundOrganization = organization
+        } else {
+          this.searchError = 'Организация не найдена'
+        }
+      } catch (error) {
+        console.error('Ошибка поиска организации:', error)
+        this.searchError = 'Ошибка при поиске организации. Проверьте API ключ DaData.'
+      } finally {
+        this.searchLoading = false
+      }
+    },
+    
+    useFoundOrganization() {
+      if (this.foundOrganization) {
+        this.form.title = this.foundOrganization.name || ''
+        this.form.address = this.foundOrganization.address || ''
+        this.form.ogrn = this.foundOrganization.ogrn || ''
+        
+        // Очищаем результаты поиска
+        this.foundOrganization = null
+        this.innSearch = ''
+        this.searchError = ''
       }
     },
     
@@ -318,5 +407,56 @@ export default {
     width: 100%;
     justify-content: center;
   }
+}
+
+/* Стили для поиска организации */
+.inn-search-container {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.inn-search-container .form-control {
+  flex: 1;
+}
+
+.search-btn {
+  white-space: nowrap;
+}
+
+.search-loading {
+  color: #007bff;
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+.search-error {
+  color: #dc3545;
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+.found-organization {
+  margin-top: 15px;
+  padding: 15px;
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+}
+
+.org-info h4 {
+  margin: 0 0 10px 0;
+  color: #333;
+  font-size: 16px;
+}
+
+.org-info p {
+  margin: 5px 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.org-info strong {
+  color: #333;
 }
 </style>

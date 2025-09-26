@@ -34,7 +34,7 @@
         <h4>Отладочная информация:</h4>
         <p><strong>Авторизован:</strong> {{ isAuthenticated }}</p>
         <p><strong>Пользователь:</strong> {{ user ? JSON.stringify(user) : 'null' }}</p>
-        <p><strong>Токен:</strong> {{ localStorage.getItem('token') ? 'есть' : 'нет' }}</p>
+        <p><strong>Токен:</strong> {{ hasToken ? 'есть' : 'нет' }}</p>
       </div>
 
       <!-- Быстрые действия для авторизованных пользователей -->
@@ -204,6 +204,11 @@ export default {
   beforeUnmount() {
     window.removeEventListener('auth-updated', this.handleAuthUpdate)
   },
+  computed: {
+    hasToken() {
+      return typeof localStorage !== 'undefined' && localStorage.getItem('token') !== null
+    }
+  },
   methods: {
     async checkApiStatus() {
       try {
@@ -218,6 +223,8 @@ export default {
       }
     },
     checkAuthStatus() {
+      if (typeof localStorage === 'undefined') return
+      
       const token = localStorage.getItem('token')
       const user = localStorage.getItem('user')
       

@@ -44,8 +44,8 @@
           <div class="seller-header">
             <h3 class="seller-title" :title="seller.title">{{ seller.short_title }}</h3>
             <div class="seller-actions">
-              <button @click="viewProducts(seller)" class="btn btn-sm btn-info" :title="'Товары (' + seller.products_count + ')'">
-                📦 {{ seller.products_count }}
+              <button @click="viewSellerDetails(seller)" class="btn btn-sm btn-info" title="Просмотр">
+                👁️
               </button>
               <button @click="editSeller(seller)" class="btn btn-sm btn-warning" title="Редактировать">
                 ✏️
@@ -117,26 +117,17 @@
       @close="closeModal"
       @saved="onSellerSaved"
     />
-
-    <!-- Modal для просмотра продуктов продавца -->
-    <SellerProducts
-      v-if="showProductsModal"
-      :seller="selectedSeller"
-      @close="closeProductsModal"
-    />
   </div>
 </template>
 
 <script>
 import { SellerAPI } from '../services/api.js'
 import SellerForm from './SellerForm.vue'
-import SellerProducts from './SellerProducts.vue'
 
 export default {
   name: 'SellerList',
   components: {
-    SellerForm,
-    SellerProducts
+    SellerForm
   },
   data() {
     return {
@@ -149,7 +140,6 @@ export default {
       currentPage: 1,
       totalPages: 1,
       showModal: false,
-      showProductsModal: false,
       selectedSeller: null
     }
   },
@@ -237,14 +227,14 @@ export default {
       this.showModal = true
     },
     
+    viewSellerDetails(seller) {
+      // TODO: Реализовать просмотр деталей продавца
+      console.log('Просмотр продавца:', seller)
+    },
+    
     editSeller(seller) {
       this.selectedSeller = seller
       this.showModal = true
-    },
-    
-    viewProducts(seller) {
-      this.selectedSeller = seller
-      this.showProductsModal = true
     },
     
     async deleteSeller(seller) {
@@ -264,11 +254,6 @@ export default {
     
     closeModal() {
       this.showModal = false
-      this.selectedSeller = null
-    },
-    
-    closeProductsModal() {
-      this.showProductsModal = false
       this.selectedSeller = null
     },
     
@@ -519,6 +504,15 @@ export default {
 
 .btn-warning:hover {
   background: #e0a800;
+}
+
+.btn-info {
+  background: #17a2b8;
+  color: white;
+}
+
+.btn-info:hover {
+  background: #138496;
 }
 
 .btn-danger {

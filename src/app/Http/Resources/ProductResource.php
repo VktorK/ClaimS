@@ -24,6 +24,8 @@ class ProductResource extends JsonResource
             'date_of_buying' => $this->date_of_buying ? $this->date_of_buying->format('Y-m-d') : null,
             'age_in_days' => $this->age_in_days,
             'has_serial_number' => $this->hasSerialNumber(),
+            'claims_count' => $this->claims_count,
+            'active_claims_count' => $this->active_claims_count,
             'seller_id' => $this->seller_id,
             'claim_id' => $this->claim_id,
             'user_id' => $this->user_id,
@@ -53,6 +55,22 @@ class ProductResource extends JsonResource
                     'id' => $this->claim->id,
                     // Поля claim будут добавлены когда создадим модель Claim
                 ];
+            }),
+            
+            'claims' => $this->whenLoaded('claims', function () {
+                return $this->claims->map(function ($claim) {
+                    return [
+                        'id' => $claim->id,
+                        'title' => $claim->title,
+                        'status' => $claim->status,
+                        'status_label' => $claim->status_label,
+                        'type' => $claim->type,
+                        'type_label' => $claim->type_label,
+                        'claim_date' => $claim->claim_date ? $claim->claim_date->format('Y-m-d') : null,
+                        'claimed_amount' => $claim->claimed_amount,
+                        'formatted_claimed_amount' => $claim->formatted_claimed_amount,
+                    ];
+                });
             }),
         ];
     }

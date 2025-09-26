@@ -78,6 +78,56 @@ async function apiRequest(url, options = {}) {
     }
 }
 
+// API сервис для работы с претензиями
+export class ClaimAPI {
+    static baseURL = '/api/claims'
+
+    // Получить список претензий
+    static async getClaims(params = {}) {
+        const queryParams = new URLSearchParams(params).toString()
+        const url = queryParams ? `${this.baseURL}?${queryParams}` : this.baseURL
+        return apiRequest(url)
+    }
+
+    // Получить конкретную претензию
+    static async getClaim(id) {
+        return apiRequest(`${this.baseURL}/${id}`)
+    }
+
+    // Создать претензию
+    static async createClaim(data) {
+        return apiRequest(this.baseURL, {
+            method: 'POST',
+            body: JSON.stringify(data)
+        })
+    }
+
+    // Обновить претензию
+    static async updateClaim(id, data) {
+        return apiRequest(`${this.baseURL}/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(data)
+        })
+    }
+
+    // Удалить претензию
+    static async deleteClaim(id) {
+        return apiRequest(`${this.baseURL}/${id}`, {
+            method: 'DELETE'
+        })
+    }
+
+    // Получить статистику претензий
+    static async getStatistics() {
+        return apiRequest(`${this.baseURL}/statistics`)
+    }
+
+    // Получить претензии товара
+    static async getClaimsByProduct(productId) {
+        return apiRequest(`${this.baseURL}/product/${productId}`)
+    }
+}
+
 // API сервис для работы с товарами
 export class ProductAPI {
     static baseURL = '/api/products'
