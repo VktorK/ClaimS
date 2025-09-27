@@ -41,7 +41,7 @@
           </div>
 
           <div class="products-list">
-            <div v-for="product in products" :key="product.id" class="product-item">
+            <div v-for="product in products" :key="product.id" class="product-item" @click="viewProduct(product)">
               <div class="product-main">
                 <h5 class="product-title">{{ product.title }}</h5>
                 <div class="product-price">{{ product.formatted_price || formatCurrency(product.price) }}</div>
@@ -77,14 +77,26 @@
         </button>
       </div>
     </div>
+
+    <!-- Модальное окно для просмотра товара -->
+    <ProductViewForm
+      v-if="showProductView"
+      :product="selectedProduct"
+      @close="closeProductView"
+      @edit="editProduct"
+    />
   </div>
 </template>
 
 <script>
 import { SellerAPI } from '../services/api.js'
+import ProductViewForm from './ProductViewForm.vue'
 
 export default {
   name: 'SellerProducts',
+  components: {
+    ProductViewForm
+  },
   props: {
     seller: {
       type: Object,
@@ -95,7 +107,9 @@ export default {
   data() {
     return {
       products: [],
-      loading: false
+      loading: false,
+      showProductView: false,
+      selectedProduct: null
     }
   },
   computed: {
@@ -141,6 +155,24 @@ export default {
         style: 'currency',
         currency: 'RUB'
       }).format(value)
+    },
+    
+    viewProduct(product) {
+      this.selectedProduct = product
+      this.showProductView = true
+    },
+    
+    closeProductView() {
+      this.showProductView = false
+      this.selectedProduct = null
+    },
+    
+    editProduct(product) {
+      // Закрываем текущие модальные окна
+      this.closeProductView()
+      this.closeModal()
+      // Переходим на страницу товаров с редактированием
+      this.$router.push(`/products?edit=${product.id}`)
     }
   }
 }
@@ -280,11 +312,13 @@ export default {
   border: 1px solid #eee;
   border-radius: 6px;
   margin-bottom: 10px;
-  transition: box-shadow 0.2s;
+  transition: box-shadow 0.2s, background-color 0.2s;
+  cursor: pointer;
 }
 
 .product-item:hover {
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  background-color: #f8f9fa;
 }
 
 .product-main {

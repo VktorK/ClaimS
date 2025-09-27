@@ -3,10 +3,10 @@
     <div class="header">
       <h2>Список продавцов</h2>
       <div class="actions">
-        <input 
-          v-model="search" 
+        <input
+          v-model="search"
           @input="searchSellers"
-          type="text" 
+          type="text"
           placeholder="Поиск по названию или ОГРН..."
           class="search-input"
         />
@@ -25,14 +25,13 @@
         <select v-model="hasOgrn" @change="filterByOgrn" class="filter-select">
           <option value="">Все продавцы</option>
           <option value="true">С ОГРН</option>
-          <option value="false">Без ОГРН</option>
         </select>
-        
+
         <select v-model="sortBy" @change="sortSellers" class="filter-select">
           <option value="created_at">По дате создания</option>
           <option value="title">По названию</option>
         </select>
-        
+
         <select v-model="sortOrder" @change="sortSellers" class="filter-select">
           <option value="desc">По убыванию</option>
           <option value="asc">По возрастанию</option>
@@ -40,36 +39,36 @@
       </div>
 
       <div class="sellers-grid">
-        <div v-for="seller in sellers" :key="seller.id" class="seller-card">
+        <div v-for="seller in sellers" :key="seller.id" class="seller-card" @click="viewSellerDetails(seller)">
           <div class="seller-header">
             <h3 class="seller-title" :title="seller.title">{{ seller.short_title }}</h3>
             <div class="seller-actions">
-              <button @click="viewSellerDetails(seller)" class="btn btn-sm btn-info" title="Просмотр">
+              <button @click.stop="viewSellerDetails(seller)" class="btn btn-sm btn-info" title="Просмотр">
                 👁️
               </button>
-              <button @click="editSeller(seller)" class="btn btn-sm btn-warning" title="Редактировать">
+              <button @click.stop="editSeller(seller)" class="btn btn-sm btn-warning" title="Редактировать">
                 ✏️
               </button>
-              <button @click="deleteSeller(seller)" class="btn btn-sm btn-danger" title="Удалить">
+              <button @click.stop="deleteSeller(seller)" class="btn btn-sm btn-danger" title="Удалить">
                 🗑️
               </button>
             </div>
           </div>
-          
+
           <div class="seller-info">
             <div class="info-item" v-if="seller.address">
               📍 <span>{{ seller.address }}</span>
             </div>
-            
+
             <div class="info-item" v-if="seller.ogrn">
               🏢 <span>ОГРН: {{ seller.ogrn }}</span>
             </div>
-            
+
             <div class="info-item" v-if="seller.products_count > 0">
               💰 <span>Общая стоимость: {{ formatCurrency(seller.total_value) }}</span>
             </div>
           </div>
-          
+
           <div class="seller-footer">
             <span class="created-date">
               Создан: {{ formatDate(seller.created_at) }}
@@ -80,7 +79,7 @@
             </div>
           </div>
         </div>
-        
+
         <div v-if="sellers.length === 0" class="no-data">
           👥
           <p>Продавцы не найдены</p>
@@ -88,20 +87,20 @@
       </div>
 
       <div class="pagination" v-if="totalPages > 1">
-        <button 
-          @click="goToPage(currentPage - 1)" 
+        <button
+          @click="goToPage(currentPage - 1)"
           :disabled="currentPage === 1"
           class="btn btn-sm"
         >
           <i class="fas fa-chevron-left"></i>
         </button>
-        
+
         <span class="page-info">
           Страница {{ currentPage }} из {{ totalPages }}
         </span>
-        
-        <button 
-          @click="goToPage(currentPage + 1)" 
+
+        <button
+          @click="goToPage(currentPage + 1)"
           :disabled="currentPage === totalPages"
           class="btn btn-sm"
         >
@@ -111,11 +110,19 @@
     </div>
 
     <!-- Modal для создания/редактирования продавца -->
-    <SellerForm 
+    <SellerForm
       v-if="showModal"
       :seller="selectedSeller"
       @close="closeModal"
       @saved="onSellerSaved"
+    />
+    
+    <!-- Modal для просмотра продавца -->
+    <SellerViewForm
+      v-if="showViewModal"
+      :seller="selectedSeller"
+      @close="closeViewModal"
+      @edit="editSellerFromView"
     />
   </div>
 </template>
@@ -123,11 +130,13 @@
 <script>
 import { SellerAPI } from '../services/api.js'
 import SellerForm from './SellerForm.vue'
+import SellerViewForm from './SellerViewForm.vue'
 
 export default {
   name: 'SellerList',
   components: {
-    SellerForm
+    SellerForm,
+    SellerViewForm
   },
   data() {
     return {
@@ -140,6 +149,7 @@ export default {
       currentPage: 1,
       totalPages: 1,
       showModal: false,
+      showViewModal: false,
       selectedSeller: null
     }
   },
@@ -157,9 +167,9 @@ export default {
           sort_order: this.sortOrder,
           page: this.currentPage
         }
-        
+
         const response = await SellerAPI.getSellers(params)
-        
+
         if (response.success) {
           this.sellers = Array.isArray(response.data) ? response.data : response.data.data
           this.totalPages = response.data.last_page || 1
@@ -168,7 +178,7 @@ export default {
         }
       } catch (error) {
         console.error('Error loading sellers:', error)
-        
+
         // Проверяем, если это ошибка авторизации
         if (error.response && error.response.status === 401) {
           // Очищаем токен и перенаправляем на страницу входа
@@ -180,9 +190,9 @@ export default {
           this.$router.push('/login')
           return
         }
-        
+
         // Проверяем, если ответ не JSON (например, HTML редирект)
-        if (error.response && error.response.headers['content-type'] && 
+        if (error.response && error.response.headers['content-type'] &&
             !error.response.headers['content-type'].includes('application/json')) {
           // Это HTML редирект, пользователь не авторизован
           localStorage.removeItem('token')
@@ -193,50 +203,50 @@ export default {
           this.$router.push('/login')
           return
         }
-        
+
         console.error('Ошибка загрузки продавцов')
       } finally {
         this.loading = false
       }
     },
-    
+
     searchSellers() {
       this.currentPage = 1
       this.loadSellers()
     },
-    
+
     filterByOgrn() {
       this.currentPage = 1
       this.loadSellers()
     },
-    
+
     sortSellers() {
       this.currentPage = 1
       this.loadSellers()
     },
-    
+
     goToPage(page) {
       if (page >= 1 && page <= this.totalPages) {
         this.currentPage = page
         this.loadSellers()
       }
     },
-    
+
     openCreateModal() {
       this.selectedSeller = null
       this.showModal = true
     },
-    
+
     viewSellerDetails(seller) {
-      // TODO: Реализовать просмотр деталей продавца
-      console.log('Просмотр продавца:', seller)
+      this.selectedSeller = seller
+      this.showViewModal = true
     },
-    
+
     editSeller(seller) {
       this.selectedSeller = seller
       this.showModal = true
     },
-    
+
     async deleteSeller(seller) {
       try {
         const response = await SellerAPI.deleteSeller(seller.id)
@@ -251,22 +261,33 @@ export default {
         console.error('Ошибка удаления продавца')
       }
     },
-    
+
     closeModal() {
       this.showModal = false
       this.selectedSeller = null
     },
-    
+
+    closeViewModal() {
+      this.showViewModal = false
+      this.selectedSeller = null
+    },
+
+    editSellerFromView(seller) {
+      this.closeViewModal()
+      this.selectedSeller = seller
+      this.showModal = true
+    },
+
     onSellerSaved() {
       this.closeModal()
       this.loadSellers()
     },
-    
+
     formatDate(date) {
       if (!date) return '-'
       return new Date(date).toLocaleDateString('ru-RU')
     },
-    
+
     formatCurrency(value) {
       if (!value) return '0 ₽'
       return new Intl.NumberFormat('ru-RU', {
@@ -343,6 +364,7 @@ export default {
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
 }
 
 .seller-card:hover {
@@ -533,34 +555,34 @@ export default {
   .sellers-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .header {
     flex-direction: column;
     align-items: stretch;
     gap: 15px;
   }
-  
+
   .actions {
     flex-direction: column;
   }
-  
+
   .search-input {
     width: 100%;
   }
-  
+
   .filters {
     flex-direction: column;
   }
-  
+
   .filter-select {
     width: 100%;
   }
-  
+
   .seller-header {
     flex-direction: column;
     gap: 15px;
   }
-  
+
   .seller-actions {
     align-self: flex-end;
   }
