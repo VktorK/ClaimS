@@ -1,56 +1,64 @@
 <template>
-  <div class="consumers-page">
-    <div class="page-header">
-      <h1>Потребители</h1>
+  <div class="template-manager">
+    <div class="template-manager-header">
+      <h2>Управление шаблонами претензий</h2>
       <button @click="showCreateForm" class="btn btn-primary">
-        ➕ Добавить потребителя
+        ➕ Создать шаблон
       </button>
     </div>
 
-    <!-- Фильтры и поиск -->
+    <!-- Поиск и фильтры -->
     <div class="filters-section">
       <div class="search-box">
         <input 
           v-model="searchQuery" 
           @input="debouncedSearch"
           type="text" 
-          placeholder="Поиск по имени, паспорту или ИНН..."
+          placeholder="Поиск по названию или описанию..."
           class="form-control"
         />
       </div>
+      <div class="filter-checkbox">
+        <label>
+          <input 
+            v-model="showActiveOnly" 
+            @change="loadTemplates"
+            type="checkbox"
+          />
+          Только активные
+        </label>
+      </div>
     </div>
 
-    <!-- Список потребителей -->
-    <div class="consumers-grid" v-if="!loading">
-      <div v-for="consumer in consumers" :key="consumer.id" class="consumer-card">
-        <div class="consumer-header">
-          <h3 class="consumer-name" :title="consumer?.full_name || 'Не указано'">
-            {{ consumer?.full_name || 'Не указано' }}
+    <!-- Список шаблонов -->
+    <div class="templates-grid" v-if="!loading">
+      <div v-for="template in templates" :key="template.id" class="template-card">
+        <div class="template-header">
+          <h3 class="template-name" :title="template.name">
+            {{ template.name }}
           </h3>
-          <div class="consumer-actions">
-            <button @click="viewConsumer(consumer)" class="btn btn-sm btn-info" title="Просмотр">
+          <div class="template-actions">
+            <button @click="viewTemplate(template)" class="btn btn-sm btn-info" title="Просмотр">
               👁️
             </button>
-            <button @click="editConsumer(consumer)" class="btn btn-sm btn-warning" title="Редактировать">
+            <button @click="editTemplate(template)" class="btn btn-sm btn-warning" title="Редактировать">
               ✏️
             </button>
-            <button @click="deleteConsumer(consumer)" class="btn btn-sm btn-danger" title="Удалить">
+            <button @click="deleteTemplate(template)" class="btn btn-sm btn-danger" title="Удалить">
               🗑️
             </button>
           </div>
         </div>
         
-        <div class="consumer-info">
-          <div class="info-item" v-if="consumer?.passport">
-            🆔 <span>Паспорт: {{ consumer?.formatted_passport || 'Не указано' }}</span>
+        <div class="template-info">
+          <div class="info-item" v-if="template.description">
+            <span>{{ template.description }}</span>
           </div>
           
-          <div class="info-item" v-if="consumer?.inn">
-            🏢 <span>ИНН: {{ consumer?.formatted_inn || 'Не указано' }}</span>
-          </div>
-          
-          <div class="info-item" v-if="consumer?.address">
-            📍 <span>{{ consumer?.address || 'Не указано' }}</span>
+          <div class="template-status">
+            <span :class="['status-badge', template.is_active ? 'active' : 'inactive']">
+              {{ template.is_active ? 'Активен' : 'Неактивен' }}
+            </span>
           </div>
         </div>
       </div>
@@ -59,72 +67,76 @@
     <!-- Состояние загрузки -->
     <div v-if="loading" class="loading-state">
       <div class="spinner"></div>
-      <p>Загрузка потребителей...</p>
+      <p>Загрузка шаблонов...</p>
     </div>
 
     <!-- Состояние пустого списка -->
-    <div v-if="!loading && consumers.length === 0" class="empty-state">
-      <div class="empty-icon">👥</div>
-      <h3>Потребители не найдены</h3>
+    <div v-if="!loading && templates.length === 0" class="empty-state">
+      <div class="empty-icon">📄</div>
+      <h3>Шаблоны не найдены</h3>
       <p v-if="searchQuery">Попробуйте изменить поисковый запрос</p>
-      <p v-else>Добавьте первого потребителя, нажав кнопку "Добавить потребителя"</p>
+      <p v-else>Создайте первый шаблон, нажав кнопку "Создать шаблон"</p>
     </div>
 
     <!-- Модальные окна -->
-    <ConsumerForm 
+    <ClaimTemplateForm 
       v-if="showForm" 
-      :consumer="selectedConsumer"
+      :template="selectedTemplate"
       @close="closeForm"
-      @saved="onConsumerSaved"
+      @saved="onTemplateSaved"
     />
     
-    <ConsumerViewForm 
+    <ClaimTemplateViewForm 
       v-if="showViewForm" 
-      :consumer="selectedConsumer"
+      :template="selectedTemplate"
       @close="closeViewForm"
-      @edit="editConsumerFromView"
-      @delete="deleteConsumerFromView"
+      @edit="editTemplateFromView"
+      @delete="deleteTemplateFromView"
     />
   </div>
 </template>
 
 <script>
-import { ConsumerAPI } from '../services/api.js'
-import ConsumerForm from '../components/ConsumerForm.vue'
-import ConsumerViewForm from '../components/ConsumerViewForm.vue'
+import { ClaimTemplateAPI } from '../services/api.js'
+import ClaimTemplateForm from './ClaimTemplateForm.vue'
+import ClaimTemplateViewForm from './ClaimTemplateViewForm.vue'
 
 export default {
-  name: 'Consumers',
+  name: 'ClaimTemplateManager',
   components: {
-    ConsumerForm,
-    ConsumerViewForm
+    ClaimTemplateForm,
+    ClaimTemplateViewForm
   },
   data() {
     return {
-      consumers: [],
+      templates: [],
       loading: false,
       searchQuery: '',
       searchTimeout: null,
+      showActiveOnly: true,
       showForm: false,
       showViewForm: false,
-      selectedConsumer: null
+      selectedTemplate: null
     }
   },
   mounted() {
-    this.loadConsumers()
+    this.loadTemplates()
   },
   methods: {
-    async loadConsumers() {
+    async loadTemplates() {
       this.loading = true
       try {
-        const response = await ConsumerAPI.getConsumers(this.searchQuery)
+        const response = await ClaimTemplateAPI.getTemplates(
+          this.searchQuery, 
+          this.showActiveOnly
+        )
         if (response.success) {
-          this.consumers = response.data
+          this.templates = response.data
         } else {
-          console.error('Ошибка загрузки потребителей:', response.message)
+          console.error('Ошибка загрузки шаблонов:', response.message)
         }
       } catch (error) {
-        console.error('Ошибка загрузки потребителей:', error)
+        console.error('Ошибка загрузки шаблонов:', error)
       } finally {
         this.loading = false
       }
@@ -133,84 +145,84 @@ export default {
     debouncedSearch() {
       clearTimeout(this.searchTimeout)
       this.searchTimeout = setTimeout(() => {
-        this.loadConsumers()
+        this.loadTemplates()
       }, 300)
     },
     
     showCreateForm() {
-      this.selectedConsumer = null
+      this.selectedTemplate = null
       this.showForm = true
     },
     
-    editConsumer(consumer) {
-      this.selectedConsumer = consumer
+    editTemplate(template) {
+      this.selectedTemplate = template
       this.showForm = true
     },
     
-    viewConsumer(consumer) {
-      this.selectedConsumer = consumer
+    viewTemplate(template) {
+      this.selectedTemplate = template
       this.showViewForm = true
     },
     
-    async deleteConsumer(consumer) {
-      if (confirm(`Вы уверены, что хотите удалить потребителя "${consumer?.full_name || 'Не указано'}"?`)) {
+    async deleteTemplate(template) {
+      if (confirm(`Вы уверены, что хотите удалить шаблон "${template.name}"?`)) {
         try {
-          const response = await ConsumerAPI.deleteConsumer(consumer.id)
+          const response = await ClaimTemplateAPI.deleteTemplate(template.id)
           if (response.success) {
-            this.loadConsumers()
+            this.loadTemplates()
           } else {
-            console.error('Ошибка удаления потребителя:', response.message)
+            console.error('Ошибка удаления шаблона:', response.message)
           }
         } catch (error) {
-          console.error('Ошибка удаления потребителя:', error)
+          console.error('Ошибка удаления шаблона:', error)
         }
       }
     },
     
     closeForm() {
       this.showForm = false
-      this.selectedConsumer = null
+      this.selectedTemplate = null
     },
     
     closeViewForm() {
       this.showViewForm = false
-      this.selectedConsumer = null
+      this.selectedTemplate = null
     },
     
-    onConsumerSaved() {
+    onTemplateSaved() {
       this.closeForm()
-      this.loadConsumers()
+      this.loadTemplates()
     },
     
-    editConsumerFromView(consumer) {
+    editTemplateFromView(template) {
       this.closeViewForm()
-      this.selectedConsumer = consumer
+      this.selectedTemplate = template
       this.showForm = true
     },
     
-    deleteConsumerFromView(consumer) {
+    deleteTemplateFromView(template) {
       this.closeViewForm()
-      this.deleteConsumer(consumer)
+      this.deleteTemplate(template)
     }
   }
 }
 </script>
 
 <style scoped>
-.consumers-page {
+.template-manager {
   padding: 24px;
   max-width: 1200px;
   margin: 0 auto;
 }
 
-.page-header {
+.template-manager-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
 }
 
-.page-header h1 {
+.template-manager-header h2 {
   margin: 0;
   font-size: 32px;
   font-weight: 700;
@@ -218,20 +230,39 @@ export default {
 }
 
 .filters-section {
+  display: flex;
+  gap: 20px;
   margin-bottom: 24px;
+  align-items: center;
 }
 
 .search-box {
+  flex: 1;
   max-width: 400px;
 }
 
-.consumers-grid {
+.filter-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-checkbox label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #666;
+}
+
+.templates-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
   gap: 20px;
 }
 
-.consumer-card {
+.template-card {
   background: white;
   border-radius: 8px;
   padding: 20px;
@@ -239,18 +270,18 @@ export default {
   transition: box-shadow 0.2s;
 }
 
-.consumer-card:hover {
+.template-card:hover {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
 
-.consumer-header {
+.template-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 16px;
 }
 
-.consumer-name {
+.template-name {
   margin: 0;
   font-size: 18px;
   font-weight: 600;
@@ -259,13 +290,13 @@ export default {
   margin-right: 12px;
 }
 
-.consumer-actions {
+.template-actions {
   display: flex;
   gap: 8px;
   min-width: 100px;
 }
 
-.consumer-actions .btn {
+.template-actions .btn {
   min-width: 32px;
   height: 32px;
   padding: 0;
@@ -274,22 +305,38 @@ export default {
   justify-content: center;
 }
 
-.consumer-info {
+.template-info {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
 .info-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
   font-size: 14px;
   color: #666;
+  line-height: 1.4;
 }
 
-.info-item span {
-  flex: 1;
+.template-status {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.status-badge.active {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-badge.inactive {
+  background: #f8d7da;
+  color: #721c24;
 }
 
 .loading-state, .empty-state {

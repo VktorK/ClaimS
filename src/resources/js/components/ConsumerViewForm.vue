@@ -14,7 +14,7 @@
             <label for="last_name">Фамилия</label>
             <input 
               id="last_name"
-              :value="consumer.last_name" 
+              :value="consumer?.last_name || 'Не указано'" 
               type="text" 
               class="form-control"
               readonly
@@ -25,7 +25,7 @@
             <label for="first_name">Имя</label>
             <input 
               id="first_name"
-              :value="consumer.first_name" 
+              :value="consumer?.first_name || 'Не указано'" 
               type="text" 
               class="form-control"
               readonly
@@ -36,7 +36,7 @@
             <label for="middle_name">Отчество</label>
             <input 
               id="middle_name"
-              :value="consumer.middle_name || '-'" 
+              :value="consumer?.middle_name || '-'" 
               type="text" 
               class="form-control"
               readonly
@@ -48,7 +48,7 @@
           <label for="address">Адрес</label>
           <textarea 
             id="address"
-            :value="consumer.address" 
+            :value="consumer?.address || 'Не указано'" 
             class="form-control"
             readonly
             rows="3"
@@ -60,7 +60,7 @@
             <label for="passport">Паспорт</label>
             <input 
               id="passport"
-              :value="consumer.formatted_passport" 
+              :value="consumer?.formatted_passport || 'Не указано'" 
               type="text" 
               class="form-control"
               readonly
@@ -71,7 +71,7 @@
             <label for="inn">ИНН</label>
             <input 
               id="inn"
-              :value="consumer.formatted_inn || '-'" 
+              :value="consumer?.formatted_inn || '-'" 
               type="text" 
               class="form-control"
               readonly
@@ -79,22 +79,22 @@
           </div>
         </div>
 
-        <div class="form-group" v-if="consumer.passport_issued_by">
+        <div class="form-group" v-if="consumer?.passport_issued_by">
           <label for="passport_issued_by">Кем выдан паспорт</label>
           <input 
             id="passport_issued_by"
-            :value="consumer.passport_issued_by" 
+            :value="consumer?.passport_issued_by || 'Не указано'" 
             type="text" 
             class="form-control"
             readonly
           />
         </div>
 
-        <div class="form-group" v-if="consumer.passport_issued_date">
+        <div class="form-group" v-if="consumer?.passport_issued_date">
           <label for="passport_issued_date">Дата выдачи паспорта</label>
           <input 
             id="passport_issued_date"
-            :value="formatDate(consumer.passport_issued_date)" 
+            :value="formatDate(consumer?.passport_issued_date)" 
             type="text" 
             class="form-control"
             readonly
@@ -106,7 +106,7 @@
             <label for="created_at">Дата создания</label>
             <input 
               id="created_at"
-              :value="formatDate(consumer.created_at)" 
+              :value="formatDate(consumer?.created_at)" 
               type="text" 
               class="form-control"
               readonly
@@ -117,7 +117,7 @@
             <label for="updated_at">Дата обновления</label>
             <input 
               id="updated_at"
-              :value="formatDate(consumer.updated_at)" 
+              :value="formatDate(consumer?.updated_at)" 
               type="text" 
               class="form-control"
               readonly
@@ -164,11 +164,15 @@ export default {
     },
     
     editConsumer() {
-      this.$emit('edit', this.consumer)
+      if (this.consumer) {
+        this.$emit('edit', this.consumer)
+      }
     },
     
     deleteConsumer() {
-      this.$emit('delete', this.consumer)
+      if (this.consumer) {
+        this.$emit('delete', this.consumer)
+      }
     },
     
     closeModal() {

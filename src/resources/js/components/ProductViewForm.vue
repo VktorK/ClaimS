@@ -96,7 +96,7 @@
                      <label for="consumer_name">Потребитель</label>
                      <input 
                        id="consumer_name"
-                       :value="localProduct.consumer.full_name" 
+                       :value="localProduct.consumer?.full_name || 'Не указано'" 
                        type="text" 
                        class="form-control consumer-field"
                        readonly

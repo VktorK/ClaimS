@@ -30,6 +30,38 @@
             </div>
           </div>
 
+          <!-- Выбор шаблона претензии -->
+          <div class="form-group">
+            <label for="template_id">Шаблон претензии</label>
+            <div class="template-selector">
+              <select 
+                id="template_id"
+                v-model="selectedTemplateId" 
+                class="form-control"
+                @change="onTemplateChange"
+              >
+                <option value="">Выберите шаблон (необязательно)</option>
+                <option v-for="template in templates" :key="template.id" :value="template.id">
+                  {{ template.name }}
+                </option>
+              </select>
+              <button type="button" @click="openTemplateManager" class="btn btn-outline-primary btn-sm">
+                📝 Управление шаблонами
+              </button>
+            </div>
+            <small class="form-text text-muted">
+              Выберите шаблон для автоматического заполнения полей претензии
+            </small>
+          </div>
+
+          <!-- Предпросмотр шаблона -->
+          <div v-if="renderedTemplate" class="form-group">
+            <label>Предпросмотр претензии:</label>
+            <div class="template-preview">
+              <div class="preview-content" v-html="renderedTemplate"></div>
+            </div>
+          </div>
+
           <!-- Секция о ремонте -->
           <div class="form-section">
             <h4>Информация о ремонте</h4>
@@ -304,15 +336,24 @@
         </form>
       </div>
     </div>
+    
+    <!-- Модальное окно управления шаблонами -->
+    <ClaimTemplateManager 
+      v-if="showTemplateManager" 
+      @close="onTemplateManagerClose"
+    />
   </div>
 </template>
 
 <script>
-import { ClaimAPI, ProductAPI } from '../services/api.js'
+import { ClaimAPI, ProductAPI, ClaimTemplateAPI } from '../services/api.js'
+import ClaimTemplateManager from './ClaimTemplateManager.vue'
 
 export default {
   name: 'ClaimForm',
-  components: {},
+  components: {
+    ClaimTemplateManager
+  },
   props: {
     claim: {
       type: Object,
@@ -344,7 +385,11 @@ export default {
         resolution_notes: ''
       },
       errors: {},
-      loading: false
+      loading: false,
+      templates: [],
+      selectedTemplateId: '',
+      renderedTemplate: '',
+      showTemplateManager: false
     }
   },
   computed: {
@@ -383,7 +428,8 @@ export default {
       immediate: true
     }
   },
-  mounted() {
+  async mounted() {
+    await this.loadTemplates()
     if (this.claim) {
       this.fillForm()
     } else {
@@ -446,9 +492,104 @@ export default {
       }
     },
     
+    async loadTemplates() {
+      try {
+        const response = await ClaimTemplateAPI.getTemplates('', true)
+        if (response.success) {
+          this.templates = response.data
+        }
+      } catch (error) {
+        console.error('Ошибка загрузки шаблонов:', error)
+      }
+    },
+    
+    async onTemplateChange() {
+      if (!this.selectedTemplateId) {
+        this.renderedTemplate = ''
+        return
+      }
+      
+      try {
+        const templateData = this.prepareTemplateData()
+        const response = await ClaimTemplateAPI.renderTemplate(this.selectedTemplateId, templateData)
+        if (response.success) {
+          this.renderedTemplate = response.data.content
+        }
+      } catch (error) {
+        console.error('Ошибка рендеринга шаблона:', error)
+      }
+    },
+    
+    prepareTemplateData() {
+      // Проверяем что products загружены и есть выбранный товар
+      if (!this.products || !Array.isArray(this.products) || !this.form.product_id) {
+        return {}
+      }
+      
+      const selectedProduct = this.products.find(p => p.id === this.form.product_id)
+      if (!selectedProduct) return {}
+      
+      // Создаем безопасные объекты с значениями по умолчанию
+      const consumer = selectedProduct.consumer || {}
+      const seller = selectedProduct.seller || {}
+      
+      return {
+        consumer: {
+          full_name: consumer.full_name || 'Не указано',
+          short_name: consumer.short_name || 'Не указано',
+          address: consumer.address || 'Не указано',
+          passport: consumer.passport || 'Не указано',
+          formatted_passport: consumer.formatted_passport || 'Не указано',
+          inn: consumer.inn || 'Не указано',
+          formatted_inn: consumer.formatted_inn || 'Не указано',
+          passport_issued_by: consumer.passport_issued_by || 'Не указано',
+          passport_issued_date: consumer.passport_issued_date || 'Не указано'
+        },
+        product: {
+          title: selectedProduct.title || 'Не указано',
+          model: selectedProduct.model || 'Не указано',
+          serial_number: selectedProduct.serial_number || 'Не указано',
+          price: selectedProduct.price || 'Не указано',
+          date_of_buying: selectedProduct.date_of_buying || 'Не указано',
+          warranty_period: selectedProduct.warranty_period || 'Не указано'
+        },
+        seller: {
+          title: seller.title || 'Не указано',
+          address: seller.address || 'Не указано',
+          ogrn: seller.ogrn || 'Не указано'
+        },
+        claim: {
+          type: this.form.type || 'Не указано',
+          status: this.form.status || 'Не указано',
+          created_at: this.form.claim_date || new Date().toISOString().split('T')[0],
+          was_in_repair: this.form.was_in_repair ? 'Да' : 'Нет',
+          service_center_documents: this.form.service_center_documents || 'Не указано',
+          previous_defect: this.form.previous_defect || 'Не указано',
+          current_defect: this.form.current_defect || 'Не указано',
+          expertiseConducted: this.form.expertiseConducted ? 'Да' : 'Нет',
+          expertiseData: this.form.expertiseData || 'Не указано',
+          expertiseDefect: this.form.expertiseDefect || 'Не указано',
+          actualDefect: this.form.actualDefect || 'Не указано'
+        }
+      }
+    },
+    
+    openTemplateManager() {
+      this.showTemplateManager = true
+    },
+    
+    onTemplateManagerClose() {
+      this.showTemplateManager = false
+      this.loadTemplates()
+    },
+    
     onProductChange() {
       // При изменении товара больше не показываем модальные окна
       // Все поля теперь встроены в форму
+      // Обновляем предпросмотр шаблона если он выбран
+      if (this.selectedTemplateId) {
+        this.onTemplateChange()
+      }
     },
     
     closeModal() {
@@ -629,6 +770,49 @@ export default {
   color: #dc3545;
   font-size: 12px;
   margin-top: 4px;
+}
+
+.form-text {
+  display: block;
+  margin-top: 5px;
+  font-size: 12px;
+  color: #6c757d;
+}
+
+.template-selector {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.template-selector .form-control {
+  flex: 1;
+}
+
+.template-preview {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 15px;
+  background: #f8f9fa;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.preview-content {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #333;
+}
+
+.btn-outline-primary {
+  background: transparent;
+  border: 1px solid #007bff;
+  color: #007bff;
+}
+
+.btn-outline-primary:hover {
+  background: #007bff;
+  color: white;
 }
 
 .modal-footer {

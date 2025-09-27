@@ -213,6 +213,8 @@ export default {
   },
   methods: {
     fillForm() {
+      if (!this.consumer) return
+      
       this.form = {
         first_name: this.consumer.first_name || '',
         last_name: this.consumer.last_name || '',
@@ -231,7 +233,7 @@ export default {
       
       try {
         let response
-        if (this.isEdit) {
+        if (this.isEdit && this.consumer) {
           response = await ConsumerAPI.updateConsumer(this.consumer.id, this.form)
         } else {
           response = await ConsumerAPI.createConsumer(this.form)

@@ -24,6 +24,9 @@
           <li>
             <router-link to="/claims" class="nav-item">Претензии</router-link>
           </li>
+          <li>
+            <router-link to="/templates" class="nav-item">Шаблоны</router-link>
+          </li>
         </template>
 
         <!-- Показываем кнопки авторизации если пользователь не авторизован -->

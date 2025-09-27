@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SellerController;
+use App\Http\Controllers\ClaimTemplateController;
 use App\Http\Controllers\ConsumerController;
 use App\Http\Controllers\ClaimController;
 
@@ -81,6 +82,17 @@ Route::middleware('auth:api')->prefix('claims')->group(function () {
     Route::get('/{id}', [ClaimController::class, 'show']);
     Route::put('/{id}', [ClaimController::class, 'update']);
     Route::delete('/{id}', [ClaimController::class, 'destroy']);
+});
+
+// Маршруты для шаблонов претензий
+Route::middleware('auth:api')->prefix('claim-templates')->group(function () {
+    Route::get('/', [ClaimTemplateController::class, 'index']);
+    Route::post('/', [ClaimTemplateController::class, 'store']);
+    Route::get('/placeholders', [ClaimTemplateController::class, 'placeholders']);
+    Route::get('/{id}', [ClaimTemplateController::class, 'show']);
+    Route::put('/{id}', [ClaimTemplateController::class, 'update']);
+    Route::delete('/{id}', [ClaimTemplateController::class, 'destroy']);
+    Route::post('/{id}/render', [ClaimTemplateController::class, 'render']);
 });
 
 // Публичные маршруты для профилей

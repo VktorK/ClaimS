@@ -365,3 +365,59 @@ export class ConsumerAPI {
         })
     }
 }
+
+// API сервис для шаблонов претензий
+export class ClaimTemplateAPI {
+    static baseURL = '/api/claim-templates'
+
+    // Получить список шаблонов
+    static async getTemplates(search = '', isActive = null) {
+        const params = new URLSearchParams()
+        if (search) params.append('search', search)
+        if (isActive !== null) params.append('is_active', isActive)
+        
+        const url = params.toString() ? `${this.baseURL}?${params}` : this.baseURL
+        return apiRequest(url)
+    }
+
+    // Создать шаблон
+    static async createTemplate(data) {
+        return apiRequest(this.baseURL, {
+            method: 'POST',
+            body: JSON.stringify(data)
+        })
+    }
+
+    // Получить шаблон
+    static async getTemplate(id) {
+        return apiRequest(`${this.baseURL}/${id}`)
+    }
+
+    // Обновить шаблон
+    static async updateTemplate(id, data) {
+        return apiRequest(`${this.baseURL}/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(data)
+        })
+    }
+
+    // Удалить шаблон
+    static async deleteTemplate(id) {
+        return apiRequest(`${this.baseURL}/${id}`, {
+            method: 'DELETE'
+        })
+    }
+
+    // Рендерить шаблон с данными
+    static async renderTemplate(id, data) {
+        return apiRequest(`${this.baseURL}/${id}/render`, {
+            method: 'POST',
+            body: JSON.stringify({ data })
+        })
+    }
+
+    // Получить доступные плейсхолдеры
+    static async getPlaceholders() {
+        return apiRequest(`${this.baseURL}/placeholders`)
+    }
+}

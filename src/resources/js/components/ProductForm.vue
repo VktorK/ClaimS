@@ -126,7 +126,7 @@
               >
                 <option value="">Выберите потребителя</option>
                 <option v-for="consumer in consumers" :key="consumer.id" :value="consumer.id">
-                  {{ consumer.full_name }}
+                  {{ consumer?.full_name || 'Не указано' }}
                 </option>
               </select>
               <button type="button" @click="openConsumerModal" class="btn btn-outline-primary btn-sm">

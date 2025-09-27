@@ -15,6 +15,7 @@ import EditProfile from './components/EditProfile.vue';
 import Products from './pages/Products.vue';
 import Sellers from './pages/Sellers.vue';
 import Claims from './pages/Claims.vue';
+import Templates from './pages/Templates.vue';
 
 // Настройка роутера
 const routes = [
@@ -45,6 +46,11 @@ const routes = [
         path: '/claims', 
         component: Claims,
         meta: { requiresAuth: true, title: 'Претензии' }
+    },
+    { 
+        path: '/templates', 
+        component: Templates,
+        meta: { requiresAuth: true, title: 'Шаблоны претензий' }
     },
     
     // Редирект с dashboard на главную (можно изменить позже)
