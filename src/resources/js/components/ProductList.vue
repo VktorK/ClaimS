@@ -47,7 +47,7 @@
           <div class="product-header">
             <h3 class="product-title" :title="product.title">{{ product.title }}</h3>
             <div class="product-actions" @click.stop>
-              <button @click="viewProductDetails(product)" class="btn btn-sm btn-info" title="Просмотр">
+              <button @click.stop="viewProductDetails(product)" class="btn btn-sm btn-info" title="Просмотр">
                 👁️
               </button>
               <button @click="editProduct(product)" class="btn btn-sm btn-warning" title="Редактировать">
@@ -70,6 +70,10 @@
             
             <div class="info-item" v-if="product.price">
               💰 <span>Цена: {{ product.formatted_price }}</span>
+            </div>
+            
+            <div class="info-item" v-if="product.warranty_period">
+              🛡️ <span>Гарантия: {{ product.formatted_warranty_period }}</span>
             </div>
             
             <div class="info-item" v-if="product.seller">
@@ -120,7 +124,7 @@
       </div>
     </div>
 
-    <!-- Modal для создания/редактирования продукта -->
+    <!-- Modal для создания/редактирования товара -->
     <ProductForm 
       v-if="showModal"
       :product="selectedProduct"
@@ -159,17 +163,13 @@
                  </div>
                  <div v-else class="claims-list">
                    <div v-for="claim in productClaims" :key="claim.id" class="claim-item">
-                     <div class="claim-header">
-                       <h5 class="claim-title">{{ claim.title }}</h5>
-                       <span class="claim-status" :class="'status-' + claim.status">
-                         {{ getStatusLabel(claim.status) }}
-                       </span>
-                     </div>
+                 <div class="claim-header">
+                   <h5 class="claim-title">{{ getTypeLabel(claim.type) }}</h5>
+                   <span class="claim-status" :class="'status-' + claim.status">
+                     {{ getStatusLabel(claim.status) }}
+                   </span>
+                 </div>
                      <div class="claim-info">
-                       <div class="info-row">
-                         <span class="label">Тип:</span>
-                         <span class="value">{{ getTypeLabel(claim.type) }}</span>
-                       </div>
                        <div class="info-row" v-if="claim.claimed_amount">
                          <span class="label">Сумма:</span>
                          <span class="value">{{ formatCurrency(claim.claimed_amount) }}</span>
@@ -177,10 +177,6 @@
                        <div class="info-row">
                          <span class="label">Дата подачи:</span>
                          <span class="value">{{ formatDate(claim.claim_date) }}</span>
-                       </div>
-                       <div class="info-row" v-if="claim.description">
-                         <span class="label">Описание:</span>
-                         <span class="value">{{ claim.description }}</span>
                        </div>
                      </div>
                      <div class="claim-actions">
@@ -258,7 +254,7 @@ export default {
           this.products = Array.isArray(response.data) ? response.data : response.data.data
           this.totalPages = response.data.last_page || 1
         } else {
-          console.error('Ошибка загрузки продуктов')
+          console.error('Ошибка загрузки товаров')
         }
       } catch (error) {
         console.error('Error loading products:', error)
@@ -269,7 +265,7 @@ export default {
           return
         }
         
-        console.error('Ошибка загрузки продуктов')
+        console.error('Ошибка загрузки товаров')
       } finally {
         this.loading = false
       }
@@ -382,94 +378,94 @@ export default {
       this.loadProducts()
     },
     
-           formatDate(date) {
-             if (!date) return '-'
-             return new Date(date).toLocaleDateString('ru-RU')
-           },
-           
-           async showProductClaims(product) {
-             this.selectedProductForClaims = product
-             this.showClaimsModal = true
-             this.productClaimsLoading = true
-             
-             try {
-               const response = await ClaimAPI.getClaimsByProduct(product.id)
-               if (response.success) {
-                 this.productClaims = response.data
-               } else {
-                 console.error('Ошибка загрузки претензий товара')
-                 this.productClaims = []
-               }
-             } catch (error) {
-               console.error('Ошибка загрузки претензий товара:', error)
-               this.productClaims = []
-             } finally {
-               this.productClaimsLoading = false
-             }
-           },
-           
-           closeClaimsModal() {
-             this.showClaimsModal = false
-             this.selectedProductForClaims = null
-             this.productClaims = []
-           },
-           
-           getStatusLabel(status) {
-             const labels = {
-               'pending': 'Ожидает рассмотрения',
-               'in_progress': 'В работе',
-               'resolved': 'Решена',
-               'rejected': 'Отклонена'
-             }
-             return labels[status] || status
-           },
-           
-           getTypeLabel(type) {
-             const labels = {
-               'defect': 'Брак',
-               'warranty': 'Гарантия',
-               'return': 'Возврат',
-               'complaint': 'Жалоба'
-             }
-             return labels[type] || type
-           },
-           
-           formatCurrency(amount) {
-             return new Intl.NumberFormat('ru-RU', {
-               style: 'currency',
-               currency: 'RUB'
-             }).format(amount)
-           },
-           
-           async editClaimFromProduct(claim) {
-             try {
-               // Переходим на страницу претензий с открытой формой редактирования
-               this.$router.push({
-                 path: '/claims',
-                 query: { edit: claim.id }
-               })
-               this.closeClaimsModal()
-             } catch (error) {
-               console.error('Ошибка при переходе к редактированию претензии:', error)
-             }
-           },
-           
-           async deleteClaimFromProduct(claim) {
-             try {
-               const response = await ClaimAPI.deleteClaim(claim.id)
-               if (response.success) {
-                 console.log('Претензия успешно удалена')
-                 // Обновляем список претензий товара
-                 await this.showProductClaims(this.selectedProductForClaims)
-                 // Обновляем список товаров для обновления счетчиков
-                 this.loadProducts()
-               } else {
-                 console.error('Ошибка удаления претензии:', response.message)
-               }
-             } catch (error) {
-               console.error('Ошибка удаления претензии:', error)
-             }
-           }
+    formatDate(date) {
+      if (!date) return '-'
+      return new Date(date).toLocaleDateString('ru-RU')
+    },
+    
+    async showProductClaims(product) {
+      this.selectedProductForClaims = product
+      this.showClaimsModal = true
+      this.productClaimsLoading = true
+      
+      try {
+        const response = await ClaimAPI.getClaimsByProduct(product.id)
+        if (response.success) {
+          this.productClaims = response.data
+        } else {
+          console.error('Ошибка загрузки претензий товара')
+          this.productClaims = []
+        }
+      } catch (error) {
+        console.error('Ошибка загрузки претензий товара:', error)
+        this.productClaims = []
+      } finally {
+        this.productClaimsLoading = false
+      }
+    },
+    
+    closeClaimsModal() {
+      this.showClaimsModal = false
+      this.selectedProductForClaims = null
+      this.productClaims = []
+    },
+    
+    getStatusLabel(status) {
+      const labels = {
+        'pending': 'Ожидает рассмотрения',
+        'in_progress': 'В работе',
+        'resolved': 'Решена',
+        'rejected': 'Отклонена'
+      }
+      return labels[status] || status
+    },
+    
+    getTypeLabel(type) {
+      const labels = {
+        'defect': 'Брак',
+        'warranty': 'Гарантия',
+        'return': 'Возврат',
+        'complaint': 'Жалоба'
+      }
+      return labels[type] || type
+    },
+    
+    formatCurrency(amount) {
+      return new Intl.NumberFormat('ru-RU', {
+        style: 'currency',
+        currency: 'RUB'
+      }).format(amount)
+    },
+    
+    async editClaimFromProduct(claim) {
+      try {
+        // Переходим на страницу претензий с открытой формой редактирования
+        this.$router.push({
+          path: '/claims',
+          query: { edit: claim.id }
+        })
+        this.closeClaimsModal()
+      } catch (error) {
+        console.error('Ошибка при переходе к редактированию претензии:', error)
+      }
+    },
+    
+    async deleteClaimFromProduct(claim) {
+      try {
+        const response = await ClaimAPI.deleteClaim(claim.id)
+        if (response.success) {
+          console.log('Претензия успешно удалена')
+          // Обновляем список претензий товара
+          await this.showProductClaims(this.selectedProductForClaims)
+          // Обновляем список товаров для обновления счетчиков
+          this.loadProducts()
+        } else {
+          console.error('Ошибка удаления претензии:', response.message)
+        }
+      } catch (error) {
+        console.error('Ошибка удаления претензии:', error)
+      }
+    }
   }
 }
 </script>

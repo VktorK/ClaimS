@@ -17,6 +17,7 @@ class Product extends BaseModel
         'serial_number',
         'price',
         'date_of_buying',
+        'warranty_period',
         'seller_id',
         'claim_id',
         'user_id',
@@ -31,7 +32,7 @@ class Product extends BaseModel
     ];
 
     /**
-     * Связь с пользователем (создатель продукта)
+     * Связь с пользователем (создатель товара)
      */
     public function user(): BelongsTo
     {
@@ -76,6 +77,25 @@ class Product extends BaseModel
     public function getFormattedPriceAttribute(): string
     {
         return $this->price ? number_format($this->price, 2) . ' ₽' : 'Не указана';
+    }
+
+    /**
+     * Получить отформатированный срок гарантии
+     */
+    public function getFormattedWarrantyPeriodAttribute(): string
+    {
+        if (!$this->warranty_period) {
+            return 'Не указан';
+        }
+        
+        $months = $this->warranty_period;
+        if ($months == 1) {
+            return '1 месяц';
+        } elseif ($months < 5) {
+            return $months . ' месяца';
+        } else {
+            return $months . ' месяцев';
+        }
     }
 
     /**

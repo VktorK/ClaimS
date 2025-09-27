@@ -70,9 +70,11 @@ class ClaimController extends Controller
             
             $validated = $request->validate([
                 'product_id' => 'required|uuid|exists:products,id',
-                'title' => 'required|string|max:255',
-                'description' => 'nullable|string',
                 'type' => 'required|in:defect,warranty,return,complaint',
+                'was_in_repair' => 'nullable|boolean',
+                'service_center_documents' => 'nullable|string',
+                'previous_defect' => 'nullable|string',
+                'current_defect' => 'nullable|string',
                 'claimed_amount' => 'nullable|numeric|min:0',
                 'claim_date' => 'required|date',
             ]);
@@ -154,10 +156,12 @@ class ClaimController extends Controller
             }
 
             $validated = $request->validate([
-                'title' => 'required|string|max:255',
-                'description' => 'nullable|string',
                 'type' => 'required|in:defect,warranty,return,complaint',
                 'status' => 'required|in:pending,in_progress,resolved,rejected',
+                'was_in_repair' => 'nullable|boolean',
+                'service_center_documents' => 'nullable|string',
+                'previous_defect' => 'nullable|string',
+                'current_defect' => 'nullable|string',
                 'claimed_amount' => 'nullable|numeric|min:0',
                 'claim_date' => 'required|date',
                 'resolution_date' => 'nullable|date',

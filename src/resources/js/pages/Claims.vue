@@ -50,9 +50,9 @@
 
           <div class="claims-grid">
             <div v-for="claim in claims" :key="claim.id" class="claim-card" @click="viewClaim(claim)">
-              <div class="claim-header">
-                <h3 class="claim-title">{{ claim.title }}</h3>
-                <div class="claim-actions" @click.stop>
+                     <div class="claim-header">
+                       <h3 class="claim-title">{{ getTypeLabel(claim.type) }}</h3>
+                       <div class="claim-actions" @click.stop>
                   <button @click="viewClaim(claim)" class="btn btn-sm btn-info" title="Просмотр">
                     👁️
                   </button>
@@ -65,38 +65,29 @@
                 </div>
               </div>
               
-              <div class="claim-info">
-                <div class="info-item">
-                  <span class="label">Тип:</span>
-                  <span class="value">{{ getTypeLabel(claim.type) }}</span>
-                </div>
-                
-                <div class="info-item" v-if="claim.product">
-                  <span class="label">Товар:</span>
-                  <span class="value">{{ claim.product.title }}</span>
-                </div>
-                
-                <div class="info-item" v-if="claim.claimed_amount">
-                  <span class="label">Сумма:</span>
-                  <span class="value">{{ formatCurrency(claim.claimed_amount) }}</span>
-                </div>
-                
-                <div class="info-item">
-                  <span class="label">Дата подачи:</span>
-                  <span class="value">{{ formatDate(claim.claim_date) }}</span>
-                </div>
-              </div>
+                     <div class="claim-info">
+                       <div class="info-item" v-if="claim.product">
+                         <span class="label">Товар:</span>
+                         <span class="value">{{ claim.product.title }}</span>
+                       </div>
+                       
+                       <div class="info-item" v-if="claim.claimed_amount">
+                         <span class="label">Сумма:</span>
+                         <span class="value">{{ formatCurrency(claim.claimed_amount) }}</span>
+                       </div>
+                       
+                       <div class="info-item">
+                         <span class="label">Дата подачи:</span>
+                         <span class="value">{{ formatDate(claim.claim_date) }}</span>
+                       </div>
+                     </div>
               
-              <div class="claim-description" v-if="claim.description">
-                <p>{{ claim.description }}</p>
-              </div>
-              
-              <div class="claim-footer">
-                <div class="claim-status" :class="'status-' + claim.status">
-                  {{ getStatusLabel(claim.status) }}
-                </div>
-              </div>
-            </div>
+                     <div class="claim-footer">
+                       <div class="claim-status" :class="'status-' + claim.status">
+                         {{ getStatusLabel(claim.status) }}
+                       </div>
+                     </div>
+                   </div>
             
             <div v-if="claims.length === 0" class="no-data">
               📋

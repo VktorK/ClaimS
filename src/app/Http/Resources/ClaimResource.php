@@ -16,12 +16,14 @@ class ClaimResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'title' => $this->title,
-            'description' => $this->description,
             'status' => $this->status,
             'status_label' => $this->status_label,
             'type' => $this->type,
             'type_label' => $this->type_label,
+            'was_in_repair' => $this->was_in_repair,
+            'service_center_documents' => $this->service_center_documents,
+            'previous_defect' => $this->previous_defect,
+            'current_defect' => $this->current_defect,
             'claimed_amount' => $this->claimed_amount,
             'formatted_claimed_amount' => $this->formatted_claimed_amount,
             'claim_date' => $this->claim_date ? $this->claim_date->format('Y-m-d') : null,

@@ -15,39 +15,17 @@
             <h4>Основная информация</h4>
             
             <div class="form-group">
-              <label for="title">Название претензии</label>
+              <label for="type">Тип претензии</label>
               <input 
-                id="title"
-                :value="claim.title" 
+                id="type"
+                :value="getTypeLabel(claim.type)" 
                 type="text" 
                 class="form-control"
                 readonly
               />
             </div>
 
-            <div class="form-group" v-if="claim.description">
-              <label for="description">Описание</label>
-              <textarea 
-                id="description"
-                :value="claim.description" 
-                class="form-control"
-                readonly
-                rows="4"
-              ></textarea>
-            </div>
-
             <div class="form-row">
-              <div class="form-group">
-                <label for="type">Тип претензии</label>
-                <input 
-                  id="type"
-                  :value="getTypeLabel(claim.type)" 
-                  type="text" 
-                  class="form-control"
-                  readonly
-                />
-              </div>
-
               <div class="form-group">
                 <label for="status">Статус</label>
                 <input 
@@ -59,9 +37,7 @@
                   readonly
                 />
               </div>
-            </div>
 
-            <div class="form-row">
               <div class="form-group" v-if="claim.claimed_amount">
                 <label for="claimed_amount">Сумма претензии</label>
                 <input 
@@ -72,17 +48,17 @@
                   readonly
                 />
               </div>
+            </div>
 
-              <div class="form-group">
-                <label for="claim_date">Дата подачи</label>
-                <input 
-                  id="claim_date"
-                  :value="formatDate(claim.claim_date)" 
-                  type="text" 
-                  class="form-control"
-                  readonly
-                />
-              </div>
+            <div class="form-group">
+              <label for="claim_date">Дата подачи</label>
+              <input 
+                id="claim_date"
+                :value="formatDate(claim.claim_date)" 
+                type="text" 
+                class="form-control"
+                readonly
+              />
             </div>
 
             <div class="form-group" v-if="claim.product">

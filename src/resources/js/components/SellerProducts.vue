@@ -65,7 +65,7 @@
             
             <div v-if="products.length === 0" class="no-products">
               <i class="fas fa-box-open"></i>
-              <p>У этого продавца пока нет продуктов</p>
+              <p>У этого продавца пока нет товаров</p>
             </div>
           </div>
         </div>
@@ -116,11 +116,11 @@ export default {
         if (response.success) {
           this.products = response.data.products || []
         } else {
-          this.$toast.error('Ошибка загрузки продуктов')
+          this.$toast.error('Ошибка загрузки товаров')
         }
       } catch (error) {
         console.error('Error loading seller products:', error)
-        this.$toast.error('Ошибка загрузки продуктов')
+        this.$toast.error('Ошибка загрузки товаров')
       } finally {
         this.loading = false
       }

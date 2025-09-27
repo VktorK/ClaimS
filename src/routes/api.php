@@ -51,7 +51,7 @@ Route::middleware('auth:api')->prefix('sellers')->group(function () {
     Route::delete('/{id}', [SellerController::class, 'destroy']);
 });
 
-// Маршруты для продуктов
+// Маршруты для товаров
 Route::middleware('auth:api')->prefix('products')->group(function () {
     Route::get('/', [ProductController::class, 'index']);
     Route::post('/', [ProductController::class, 'store']);

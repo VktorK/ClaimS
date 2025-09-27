@@ -29,7 +29,7 @@ const routes = [
     { 
         path: '/products', 
         component: Products,
-        meta: { requiresAuth: true, title: 'Продукты' }
+        meta: { requiresAuth: true, title: 'Товары' }
     },
     { 
         path: '/sellers', 

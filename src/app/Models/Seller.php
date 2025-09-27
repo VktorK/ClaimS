@@ -18,7 +18,7 @@ class Seller extends BaseModel
     ];
 
     /**
-     * Связь с продуктами
+     * Связь с товарами
      */
     public function products(): HasMany
     {
@@ -34,7 +34,7 @@ class Seller extends BaseModel
     }
 
     /**
-     * Получить количество продуктов продавца
+     * Получить количество товаров продавца
      */
     public function getProductsCountAttribute(): int
     {
@@ -42,7 +42,7 @@ class Seller extends BaseModel
     }
 
     /**
-     * Получить общую стоимость продуктов продавца
+     * Получить общую стоимость товаров продавца
      */
     public function getTotalValueAttribute(): float
     {

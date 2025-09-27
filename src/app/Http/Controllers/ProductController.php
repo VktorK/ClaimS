@@ -90,9 +90,10 @@ class ProductController extends Controller
             $validated = $request->validate([
                 'title' => 'required|string|max:255',
                 'model' => 'required|string|max:255',
-                'serial_number' => 'nullable|string|max:255|unique:products,serial_number',
+                'serial_number' => 'nullable|string|max:255|unique:products,serial_number,NULL,id,deleted_at,NULL',
                 'price' => 'required|numeric|min:0',
                 'date_of_buying' => 'required|date|before_or_equal:today',
+                'warranty_period' => 'nullable|integer|min:1|max:120',
                 'seller_id' => 'required|uuid|exists:sellers,id',
                 'claim_id' => 'nullable|uuid'
             ]);
@@ -137,9 +138,10 @@ class ProductController extends Controller
             $validated = $request->validate([
                 'title' => 'sometimes|required|string|max:255',
                 'model' => 'sometimes|required|string|max:255',
-                'serial_number' => 'nullable|string|max:255|unique:products,serial_number,' . $id,
+                'serial_number' => 'nullable|string|max:255|unique:products,serial_number,' . $id . ',id,deleted_at,NULL',
                 'price' => 'sometimes|required|numeric|min:0',
                 'date_of_buying' => 'sometimes|required|date|before_or_equal:today',
+                'warranty_period' => 'nullable|integer|min:1|max:120',
                 'seller_id' => 'sometimes|required|uuid|exists:sellers,id',
                 'claim_id' => 'nullable|uuid'
             ]);

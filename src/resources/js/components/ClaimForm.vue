@@ -18,6 +18,7 @@
               class="form-control"
               :class="{ 'is-invalid': errors.product_id }"
               required
+              @change="onProductChange"
             >
               <option value="">Выберите товар</option>
               <option v-for="product in products" :key="product.id" :value="product.id">
@@ -30,57 +31,26 @@
           </div>
 
           <div class="form-group">
-            <label for="title">Название претензии *</label>
-            <input 
-              id="title"
-              v-model="form.title" 
-              type="text" 
+            <label for="type">Тип претензии *</label>
+            <select 
+              id="type"
+              v-model="form.type" 
               class="form-control"
-              :class="{ 'is-invalid': errors.title }"
-              placeholder="Введите название претензии"
+              :class="{ 'is-invalid': errors.type }"
               required
-            />
-            <div v-if="errors.title" class="invalid-feedback">
-              {{ errors.title[0] }}
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="description">Описание</label>
-            <textarea 
-              id="description"
-              v-model="form.description" 
-              class="form-control"
-              :class="{ 'is-invalid': errors.description }"
-              placeholder="Опишите детали претензии"
-              rows="4"
-            ></textarea>
-            <div v-if="errors.description" class="invalid-feedback">
-              {{ errors.description[0] }}
+            >
+              <option value="">Выберите тип</option>
+              <option value="defect">Брак</option>
+              <option value="warranty">Гарантия</option>
+              <option value="return">Возврат</option>
+              <option value="complaint">Жалоба</option>
+            </select>
+            <div v-if="errors.type" class="invalid-feedback">
+              {{ errors.type[0] }}
             </div>
           </div>
 
           <div class="form-row">
-            <div class="form-group">
-              <label for="type">Тип претензии *</label>
-              <select 
-                id="type"
-                v-model="form.type" 
-                class="form-control"
-                :class="{ 'is-invalid': errors.type }"
-                required
-              >
-                <option value="">Выберите тип</option>
-                <option value="defect">Брак</option>
-                <option value="warranty">Гарантия</option>
-                <option value="return">Возврат</option>
-                <option value="complaint">Жалоба</option>
-              </select>
-              <div v-if="errors.type" class="invalid-feedback">
-                {{ errors.type[0] }}
-              </div>
-            </div>
-
             <div class="form-group" v-if="isEdit">
               <label for="status">Статус *</label>
               <select 
@@ -178,14 +148,25 @@
         </form>
       </div>
     </div>
+
+    <!-- Модальное окно с вопросом о ремонте -->
+    <RepairQuestionModal 
+      v-if="showRepairModal"
+      @close="closeRepairModal"
+      @save="onRepairDataSaved"
+    />
   </div>
 </template>
 
 <script>
 import { ClaimAPI, ProductAPI } from '../services/api.js'
+import RepairQuestionModal from './RepairQuestionModal.vue'
 
 export default {
   name: 'ClaimForm',
+  components: {
+    RepairQuestionModal
+  },
   props: {
     claim: {
       type: Object,
@@ -201,17 +182,20 @@ export default {
     return {
       form: {
         product_id: '',
-        title: '',
-        description: '',
         type: '',
         status: 'pending',
+        was_in_repair: null,
+        service_center_documents: '',
+        previous_defect: '',
+        current_defect: '',
         claimed_amount: '',
         claim_date: '',
         resolution_date: '',
         resolution_notes: ''
       },
       errors: {},
-      loading: false
+      loading: false,
+      showRepairModal: false
     }
   },
   computed: {
@@ -244,10 +228,12 @@ export default {
       console.log('ClaimForm: fillForm called with claim:', this.claim)
       this.form = {
         product_id: this.claim.product_id || '',
-        title: this.claim.title || '',
-        description: this.claim.description || '',
         type: this.claim.type || '',
         status: this.claim.status || 'pending',
+        was_in_repair: this.claim.was_in_repair ?? null,
+        service_center_documents: this.claim.service_center_documents || '',
+        previous_defect: this.claim.previous_defect || '',
+        current_defect: this.claim.current_defect || '',
         claimed_amount: this.claim.claimed_amount || '',
         claim_date: this.claim.claim_date || '',
         resolution_date: this.claim.resolution_date || '',
@@ -286,6 +272,26 @@ export default {
       } finally {
         this.loading = false
       }
+    },
+    
+    onProductChange() {
+      // При изменении товара показываем модальное окно с вопросом о ремонте
+      if (this.form.product_id && !this.isEdit) {
+        this.showRepairModal = true
+      }
+    },
+    
+    onRepairDataSaved(repairData) {
+      // Сохраняем данные о ремонте в форму
+      this.form.was_in_repair = repairData.was_in_repair
+      this.form.service_center_documents = repairData.service_center_documents
+      this.form.previous_defect = repairData.previous_defect
+      this.form.current_defect = repairData.current_defect
+      this.showRepairModal = false
+    },
+    
+    closeRepairModal() {
+      this.showRepairModal = false
     },
     
     closeModal() {

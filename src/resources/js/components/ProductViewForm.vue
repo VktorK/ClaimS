@@ -69,6 +69,17 @@
               />
             </div>
 
+            <div class="form-group" v-if="localProduct.warranty_period">
+              <label for="warranty_period">Срок гарантии</label>
+              <input 
+                id="warranty_period"
+                :value="localProduct.formatted_warranty_period" 
+                type="text" 
+                class="form-control"
+                readonly
+              />
+            </div>
+
                    <div class="form-group" v-if="localProduct.seller">
                      <label for="seller_title">Продавец</label>
                      <input 
@@ -90,13 +101,13 @@
                            :key="claim.id" 
                            class="claim-item"
                          >
-                           <input 
-                             :value="claim.title"
-                             type="text" 
-                             class="form-control claim-title"
-                             readonly
-                             @click="viewClaimDetails(claim)"
-                           />
+               <input 
+                 :value="getTypeLabel(claim.type)"
+                 type="text" 
+                 class="form-control claim-title"
+                 readonly
+                 @click="viewClaimDetails(claim)"
+               />
                            <span class="claim-status" :class="'status-' + claim.status">
                              {{ getStatusLabel(claim.status) }}
                            </span>
@@ -269,6 +280,26 @@ export default {
     formatDate(date) {
       if (!date) return '-'
       return new Date(date).toLocaleDateString('ru-RU')
+    },
+    
+    getTypeLabel(type) {
+      const labels = {
+        'defect': 'Брак',
+        'warranty': 'Гарантия',
+        'return': 'Возврат',
+        'complaint': 'Жалоба'
+      }
+      return labels[type] || type
+    },
+    
+    getStatusLabel(status) {
+      const labels = {
+        'pending': 'Ожидает рассмотрения',
+        'in_progress': 'В работе',
+        'resolved': 'Решена',
+        'rejected': 'Отклонена'
+      }
+      return labels[status] || status
     },
     
     closeSellerEditForm() {

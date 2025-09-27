@@ -92,7 +92,7 @@ class User extends Authenticatable implements JWTSubject
     }
 
     /**
-     * Связь с продуктами, которые создал пользователь
+     * Связь с товарами, которые создал пользователь
      */
     public function createdProducts(): HasMany
     {
@@ -100,7 +100,7 @@ class User extends Authenticatable implements JWTSubject
     }
 
     /**
-     * Связь с продуктами, которые продал пользователь
+     * Связь с товарами, которые продал пользователь
      */
     public function products(): HasMany
     {

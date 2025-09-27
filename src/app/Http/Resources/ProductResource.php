@@ -22,6 +22,8 @@ class ProductResource extends JsonResource
             'price' => $this->price,
             'formatted_price' => $this->formatted_price,
             'date_of_buying' => $this->date_of_buying ? $this->date_of_buying->format('Y-m-d') : null,
+            'warranty_period' => $this->warranty_period,
+            'formatted_warranty_period' => $this->formatted_warranty_period,
             'age_in_days' => $this->age_in_days,
             'has_serial_number' => $this->hasSerialNumber(),
             'claims_count' => $this->claims_count,

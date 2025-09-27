@@ -2,7 +2,7 @@
   <div class="modal-overlay" @click="closeModal">
     <div class="modal" @click.stop>
       <div class="modal-header">
-        <h3>{{ isEdit ? 'Редактировать продукт' : 'Добавить продукт' }}</h3>
+        <h3>{{ isEdit ? 'Редактировать товар' : 'Добавить товар' }}</h3>
         <button @click="closeModal" class="close-btn">
           <i class="fas fa-times"></i>
         </button>
@@ -18,7 +18,7 @@
               type="text" 
               class="form-control"
               :class="{ 'is-invalid': errors.title }"
-              placeholder="Введите название продукта"
+              placeholder="Введите название товара"
               required
             />
             <div v-if="errors.title" class="invalid-feedback">
@@ -35,7 +35,7 @@
                 type="text" 
                 class="form-control"
                 :class="{ 'is-invalid': errors.model }"
-                placeholder="Модель продукта"
+                placeholder="Модель товара"
                 required
               />
               <div v-if="errors.model" class="invalid-feedback">
@@ -93,6 +93,26 @@
                 {{ errors.date_of_buying[0] }}
               </div>
             </div>
+          </div>
+
+          <div class="form-group">
+            <label for="warranty_period">Срок гарантии (месяцы)</label>
+            <input 
+              id="warranty_period"
+              v-model.number="form.warranty_period" 
+              type="number" 
+              min="1"
+              max="120"
+              class="form-control"
+              :class="{ 'is-invalid': errors.warranty_period }"
+              placeholder="Например: 12"
+            />
+            <div v-if="errors.warranty_period" class="invalid-feedback">
+              {{ errors.warranty_period[0] }}
+            </div>
+            <small class="form-text text-muted">
+              Укажите срок гарантии в месяцах (от 1 до 120)
+            </small>
           </div>
 
           <div class="form-group">
@@ -233,6 +253,7 @@ export default {
         serial_number: '',
         price: null,
         date_of_buying: '',
+        warranty_period: null,
         seller_id: ''
       },
       errors: {},
@@ -268,6 +289,7 @@ export default {
         serial_number: this.product.serial_number || '',
         price: this.product.price || null,
         date_of_buying: this.product.date_of_buying || '',
+        warranty_period: this.product.warranty_period || null,
         seller_id: this.product.seller_id || ''
       }
     },

@@ -12,10 +12,12 @@ class Claim extends BaseModel
     protected $fillable = [
         'user_id',
         'product_id',
-        'title',
-        'description',
         'status',
         'type',
+        'was_in_repair',
+        'service_center_documents',
+        'previous_defect',
+        'current_defect',
         'claimed_amount',
         'claim_date',
         'resolution_date',
@@ -27,6 +29,7 @@ class Claim extends BaseModel
      * Поля, которые должны быть приведены к определенным типам
      */
     protected $casts = [
+        'was_in_repair' => 'boolean',
         'claimed_amount' => 'decimal:2',
         'claim_date' => 'date',
         'resolution_date' => 'date',
