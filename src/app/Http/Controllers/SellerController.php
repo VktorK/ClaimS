@@ -192,7 +192,7 @@ class SellerController extends Controller
             ], 404);
         }
 
-        // Проверяем, есть ли связанные товары
+        // Проверяем, есть ли связанные товары (исключая удаленные)
         if ($seller->products()->count() > 0) {
             return response()->json([
                 'success' => false,

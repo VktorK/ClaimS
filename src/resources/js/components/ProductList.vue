@@ -84,11 +84,8 @@
                    <div class="product-badges">
                      <span v-if="product.serial_number" class="badge badge-success">С серийным номером</span>
                      <span v-else class="badge badge-secondary">Без серийного номера</span>
-                     <span v-if="product.claims_count > 0" class="badge badge-warning">
+                     <span v-if="product.claims_count > 0" class="badge badge-warning" @click.stop="showProductClaims(product)">
                        ⚠️ Претензий: {{ product.claims_count }}
-                     </span>
-                     <span v-if="product.active_claims_count > 0" class="badge badge-danger">
-                       🔴 Активных: {{ product.active_claims_count }}
                      </span>
                    </div>
                  </div>
@@ -133,21 +130,82 @@
       @seller-created="onSellerCreated"
     />
 
-    <!-- Форма просмотра товара -->
-    <ProductViewForm 
-      v-if="showViewForm"
-      :product="selectedProduct"
-      @close="closeViewForm"
-      @edit="editProduct"
-      @delete="deleteProduct"
-      @edit-seller="editSellerFromProduct"
-      @seller-updated="onSellerUpdated"
-    />
-  </div>
+           <!-- Форма просмотра товара -->
+           <ProductViewForm 
+             v-if="showViewForm"
+             :product="selectedProduct"
+             @close="closeViewForm"
+             @edit="editProduct"
+             @delete="deleteProduct"
+             @edit-seller="editSellerFromProduct"
+             @seller-updated="onSellerUpdated"
+           />
+
+           <!-- Всплывающее окно со списком претензий товара -->
+           <div v-if="showClaimsModal" class="claims-popup-overlay" @click="closeClaimsModal">
+             <div class="claims-popup" @click.stop>
+               <div class="claims-popup-header">
+                 <h4>Претензии по товару: {{ selectedProductForClaims?.title }}</h4>
+                 <button @click="closeClaimsModal" class="close-btn">
+                   <i class="fas fa-times"></i>
+                 </button>
+               </div>
+               <div class="claims-popup-body">
+                 <div v-if="productClaimsLoading" class="loading">
+                   ⏳ Загрузка претензий...
+                 </div>
+                 <div v-else-if="productClaims.length === 0" class="no-claims">
+                   📋 Претензий по данному товару нет
+                 </div>
+                 <div v-else class="claims-list">
+                   <div v-for="claim in productClaims" :key="claim.id" class="claim-item">
+                     <div class="claim-header">
+                       <h5 class="claim-title">{{ claim.title }}</h5>
+                       <span class="claim-status" :class="'status-' + claim.status">
+                         {{ getStatusLabel(claim.status) }}
+                       </span>
+                     </div>
+                     <div class="claim-info">
+                       <div class="info-row">
+                         <span class="label">Тип:</span>
+                         <span class="value">{{ getTypeLabel(claim.type) }}</span>
+                       </div>
+                       <div class="info-row" v-if="claim.claimed_amount">
+                         <span class="label">Сумма:</span>
+                         <span class="value">{{ formatCurrency(claim.claimed_amount) }}</span>
+                       </div>
+                       <div class="info-row">
+                         <span class="label">Дата подачи:</span>
+                         <span class="value">{{ formatDate(claim.claim_date) }}</span>
+                       </div>
+                       <div class="info-row" v-if="claim.description">
+                         <span class="label">Описание:</span>
+                         <span class="value">{{ claim.description }}</span>
+                       </div>
+                     </div>
+                     <div class="claim-actions">
+                       <button @click="editClaimFromProduct(claim)" class="btn btn-sm btn-warning" title="Редактировать">
+                         ✏️
+                       </button>
+                       <button @click="deleteClaimFromProduct(claim)" class="btn btn-sm btn-danger" title="Удалить">
+                         🗑️
+                       </button>
+                     </div>
+                   </div>
+                 </div>
+               </div>
+               <div class="claims-popup-footer">
+                 <button @click="closeClaimsModal" class="btn btn-secondary btn-sm">
+                   Закрыть
+                 </button>
+               </div>
+             </div>
+           </div>
+         </div>
 </template>
 
 <script>
-import { ProductAPI, SellerAPI, AuthAPI } from '../services/api.js'
+import { ProductAPI, SellerAPI, AuthAPI, ClaimAPI } from '../services/api.js'
 import ProductForm from './ProductForm.vue'
 import ProductViewForm from './ProductViewForm.vue'
 
@@ -157,22 +215,26 @@ export default {
     ProductForm,
     ProductViewForm
   },
-  data() {
-    return {
-      products: [],
-      sellers: [],
-      loading: false,
-      search: '',
-      selectedSeller: '',
-      sortBy: 'created_at',
-      sortOrder: 'desc',
-      currentPage: 1,
-      totalPages: 1,
-      showModal: false,
-      showViewForm: false,
-      selectedProduct: null
-    }
-  },
+         data() {
+           return {
+             products: [],
+             sellers: [],
+             loading: false,
+             search: '',
+             selectedSeller: '',
+             sortBy: 'created_at',
+             sortOrder: 'desc',
+             currentPage: 1,
+             totalPages: 1,
+             showModal: false,
+             showViewForm: false,
+             selectedProduct: null,
+             showClaimsModal: false,
+             selectedProductForClaims: null,
+             productClaims: [],
+             productClaimsLoading: false
+           }
+         },
   mounted() {
     this.loadProducts()
     this.loadSellers()
@@ -320,10 +382,94 @@ export default {
       this.loadProducts()
     },
     
-    formatDate(date) {
-      if (!date) return '-'
-      return new Date(date).toLocaleDateString('ru-RU')
-    }
+           formatDate(date) {
+             if (!date) return '-'
+             return new Date(date).toLocaleDateString('ru-RU')
+           },
+           
+           async showProductClaims(product) {
+             this.selectedProductForClaims = product
+             this.showClaimsModal = true
+             this.productClaimsLoading = true
+             
+             try {
+               const response = await ClaimAPI.getClaimsByProduct(product.id)
+               if (response.success) {
+                 this.productClaims = response.data
+               } else {
+                 console.error('Ошибка загрузки претензий товара')
+                 this.productClaims = []
+               }
+             } catch (error) {
+               console.error('Ошибка загрузки претензий товара:', error)
+               this.productClaims = []
+             } finally {
+               this.productClaimsLoading = false
+             }
+           },
+           
+           closeClaimsModal() {
+             this.showClaimsModal = false
+             this.selectedProductForClaims = null
+             this.productClaims = []
+           },
+           
+           getStatusLabel(status) {
+             const labels = {
+               'pending': 'Ожидает рассмотрения',
+               'in_progress': 'В работе',
+               'resolved': 'Решена',
+               'rejected': 'Отклонена'
+             }
+             return labels[status] || status
+           },
+           
+           getTypeLabel(type) {
+             const labels = {
+               'defect': 'Брак',
+               'warranty': 'Гарантия',
+               'return': 'Возврат',
+               'complaint': 'Жалоба'
+             }
+             return labels[type] || type
+           },
+           
+           formatCurrency(amount) {
+             return new Intl.NumberFormat('ru-RU', {
+               style: 'currency',
+               currency: 'RUB'
+             }).format(amount)
+           },
+           
+           async editClaimFromProduct(claim) {
+             try {
+               // Переходим на страницу претензий с открытой формой редактирования
+               this.$router.push({
+                 path: '/claims',
+                 query: { edit: claim.id }
+               })
+               this.closeClaimsModal()
+             } catch (error) {
+               console.error('Ошибка при переходе к редактированию претензии:', error)
+             }
+           },
+           
+           async deleteClaimFromProduct(claim) {
+             try {
+               const response = await ClaimAPI.deleteClaim(claim.id)
+               if (response.success) {
+                 console.log('Претензия успешно удалена')
+                 // Обновляем список претензий товара
+                 await this.showProductClaims(this.selectedProductForClaims)
+                 // Обновляем список товаров для обновления счетчиков
+                 this.loadProducts()
+               } else {
+                 console.error('Ошибка удаления претензии:', response.message)
+               }
+             } catch (error) {
+               console.error('Ошибка удаления претензии:', error)
+             }
+           }
   }
 }
 </script>
@@ -492,6 +638,12 @@ export default {
 .badge-warning {
   background: #fff3cd;
   color: #856404;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.badge-warning:hover {
+  background: #ffeaa7;
 }
 
 .badge-danger {
@@ -582,6 +734,185 @@ export default {
   cursor: pointer;
 }
 
+/* Всплывающее окно со списком претензий */
+.claims-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1001;
+}
+
+.claims-popup {
+  background: white;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.claims-popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.claims-popup-header h4 {
+  margin: 0;
+  color: #333;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.claims-popup-body {
+  padding: 20px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.claims-popup-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 15px 20px;
+  border-top: 1px solid #eee;
+  background: #f8f9fa;
+}
+
+.loading {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+}
+
+.no-claims {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+  font-size: 16px;
+}
+
+.claims-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.claim-item {
+  background: #f8f9fa;
+  border-radius: 6px;
+  padding: 15px;
+  border-left: 4px solid #007bff;
+  position: relative;
+}
+
+.claim-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.claim-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.claim-status {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.status-pending {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status-in_progress {
+  background: #cce5ff;
+  color: #004085;
+}
+
+.status-resolved {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-rejected {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.claim-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.info-row .label {
+  font-weight: 500;
+  color: #666;
+  font-size: 13px;
+  min-width: 80px;
+}
+
+.info-row .value {
+  color: #333;
+  font-size: 13px;
+  text-align: right;
+  flex: 1;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #666;
+  padding: 5px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.close-btn:hover {
+  background: #f5f5f5;
+}
+
+.claim-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  justify-content: flex-end;
+}
+
+.claim-actions .btn {
+  min-width: 32px;
+  height: 32px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 @media (max-width: 768px) {
   .header {
     flex-direction: column;
@@ -612,6 +943,33 @@ export default {
   
   .product-actions {
     align-self: flex-end;
+  }
+  
+  .claims-popup {
+    width: 95%;
+    margin: 20px;
+  }
+  
+  .claims-popup-header,
+  .claims-popup-body,
+  .claims-popup-footer {
+    padding: 15px;
+  }
+  
+  .claim-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .info-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+  
+  .info-row .value {
+    text-align: left;
   }
 }
 </style>

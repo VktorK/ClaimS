@@ -49,11 +49,19 @@
           </div>
 
           <div class="claims-grid">
-            <div v-for="claim in claims" :key="claim.id" class="claim-card">
+            <div v-for="claim in claims" :key="claim.id" class="claim-card" @click="viewClaim(claim)">
               <div class="claim-header">
                 <h3 class="claim-title">{{ claim.title }}</h3>
-                <div class="claim-status" :class="'status-' + claim.status">
-                  {{ getStatusLabel(claim.status) }}
+                <div class="claim-actions" @click.stop>
+                  <button @click="viewClaim(claim)" class="btn btn-sm btn-info" title="Просмотр">
+                    👁️
+                  </button>
+                  <button @click="editClaim(claim)" class="btn btn-sm btn-warning" title="Редактировать">
+                    ✏️
+                  </button>
+                  <button @click="deleteClaim(claim)" class="btn btn-sm btn-danger" title="Удалить">
+                    🗑️
+                  </button>
                 </div>
               </div>
               
@@ -83,16 +91,10 @@
                 <p>{{ claim.description }}</p>
               </div>
               
-              <div class="claim-actions">
-                <button @click="viewClaim(claim)" class="btn btn-sm btn-info">
-                  👁️ Просмотр
-                </button>
-                <button @click="editClaim(claim)" class="btn btn-sm btn-warning">
-                  ✏️ Редактировать
-                </button>
-                <button @click="deleteClaim(claim)" class="btn btn-sm btn-danger">
-                  🗑️ Удалить
-                </button>
+              <div class="claim-footer">
+                <div class="claim-status" :class="'status-' + claim.status">
+                  {{ getStatusLabel(claim.status) }}
+                </div>
               </div>
             </div>
             
@@ -151,6 +153,11 @@ export default {
   mounted() {
     this.loadClaims()
     this.loadProducts()
+    
+    // Проверяем query параметр для автоматического открытия формы редактирования
+    if (this.$route.query.edit) {
+      this.editClaimById(this.$route.query.edit)
+    }
   },
   methods: {
     async loadClaims() {
@@ -279,6 +286,22 @@ export default {
     formatDate(date) {
       if (!date) return '-'
       return new Date(date).toLocaleDateString('ru-RU')
+    },
+    
+    async editClaimById(claimId) {
+      try {
+        const response = await ClaimAPI.getClaim(claimId)
+        if (response.success) {
+          this.selectedClaim = response.data
+          this.showModal = true
+          // Очищаем query параметр
+          this.$router.replace({ query: {} })
+        } else {
+          console.error('Ошибка загрузки претензии для редактирования')
+        }
+      } catch (error) {
+        console.error('Ошибка загрузки претензии для редактирования:', error)
+      }
     }
   }
 }
@@ -417,6 +440,7 @@ export default {
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   overflow: hidden;
   transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
 }
 
 .claim-card:hover {
@@ -437,6 +461,13 @@ export default {
   font-size: 18px;
   color: #333;
   flex: 1;
+}
+
+.claim-actions {
+  display: flex;
+  gap: 8px;
+  padding: 0;
+  justify-content: flex-end;
 }
 
 .claim-status {
@@ -504,6 +535,23 @@ export default {
 .claim-actions {
   display: flex;
   gap: 8px;
+  padding: 0;
+  justify-content: flex-end;
+}
+
+.claim-actions .btn {
+  min-width: 32px;
+  height: 32px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.claim-footer {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
   padding: 15px 20px;
   border-top: 1px solid #eee;
   background: #f8f9fa;

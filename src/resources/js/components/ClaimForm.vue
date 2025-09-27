@@ -223,6 +223,7 @@ export default {
     claim: {
       handler(newClaim) {
         console.log('ClaimForm: claim prop changed:', newClaim)
+        console.log('ClaimForm: isEdit will be:', !!newClaim)
         if (newClaim) {
           this.fillForm()
         }
@@ -240,6 +241,7 @@ export default {
   },
   methods: {
     fillForm() {
+      console.log('ClaimForm: fillForm called with claim:', this.claim)
       this.form = {
         product_id: this.claim.product_id || '',
         title: this.claim.title || '',
@@ -251,6 +253,7 @@ export default {
         resolution_date: this.claim.resolution_date || '',
         resolution_notes: this.claim.resolution_notes || ''
       }
+      console.log('ClaimForm: form filled with:', this.form)
     },
     
     async submitForm() {

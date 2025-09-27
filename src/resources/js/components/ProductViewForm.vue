@@ -84,11 +84,26 @@
                    <div class="form-group" v-if="localProduct.claims_count > 0">
                      <label for="claims_info">Претензии</label>
                      <div class="claims-info">
-                       <div class="claims-summary">
-                         <span class="claims-total">Всего претензий: {{ localProduct.claims_count }}</span>
-                         <span v-if="localProduct.active_claims_count > 0" class="claims-active">
-                           Активных: {{ localProduct.active_claims_count }}
-                         </span>
+                       <div class="claims-list" v-if="productClaims.length > 0">
+                         <div 
+                           v-for="claim in productClaims" 
+                           :key="claim.id" 
+                           class="claim-item"
+                         >
+                           <input 
+                             :value="claim.title"
+                             type="text" 
+                             class="form-control claim-title"
+                             readonly
+                             @click="viewClaimDetails(claim)"
+                           />
+                           <span class="claim-status" :class="'status-' + claim.status">
+                             {{ getStatusLabel(claim.status) }}
+                           </span>
+                         </div>
+                       </div>
+                       <div v-else-if="!claimsLoading" class="no-claims">
+                         📋 Загрузка претензий...
                        </div>
                      </div>
                    </div>
@@ -145,23 +160,46 @@
       </div>
     </div>
 
-    <!-- Форма редактирования продавца -->
-    <SellerForm 
-      v-if="showSellerEditForm"
-      :seller="selectedSeller"
-      @close="closeSellerEditForm"
-      @saved="onSellerSaved"
-    />
-  </div>
+      <!-- Форма редактирования продавца -->
+      <SellerForm 
+        v-if="showSellerEditForm"
+        :seller="selectedSeller"
+        @close="closeSellerEditForm"
+        @saved="onSellerSaved"
+      />
+
+      <!-- Форма просмотра претензии -->
+      <ClaimViewForm 
+        v-if="showClaimViewForm"
+        :claim="selectedClaim"
+        @close="closeClaimViewForm"
+        @edit="editClaimFromProduct"
+        @delete="deleteClaimFromProduct"
+      />
+
+      <!-- Форма редактирования претензии -->
+      <ClaimForm 
+        v-if="showClaimEditForm"
+        :claim="selectedClaim"
+        :products="products"
+        @close="closeClaimEditForm"
+        @saved="onClaimSaved"
+      />
+    </div>
 </template>
 
 <script>
 import SellerForm from './SellerForm.vue'
+import ClaimViewForm from './ClaimViewForm.vue'
+import ClaimForm from './ClaimForm.vue'
+import { ProductAPI, ClaimAPI } from '../services/api.js'
 
 export default {
   name: 'ProductViewForm',
   components: {
-    SellerForm
+    SellerForm,
+    ClaimViewForm,
+    ClaimForm
   },
   props: {
     product: {
@@ -175,7 +213,13 @@ export default {
       showSellerModal: false,
       showSellerEditForm: false,
       selectedSeller: null,
-      localProduct: null
+      localProduct: null,
+      showClaimViewForm: false,
+      showClaimEditForm: false,
+      selectedClaim: null,
+      productClaims: [],
+      claimsLoading: false,
+      products: []
     }
   },
   watch: {
@@ -183,6 +227,8 @@ export default {
       handler(newProduct) {
         if (newProduct) {
           this.localProduct = JSON.parse(JSON.stringify(newProduct))
+          this.loadProductClaims()
+          this.loadProducts()
         }
       },
       immediate: true
@@ -236,6 +282,106 @@ export default {
       this.updateLocalProduct()
       // Эмитим событие для обновления данных в родительском компоненте
       this.$emit('seller-updated')
+    },
+    
+    async loadProducts() {
+      try {
+        const response = await ProductAPI.getProducts()
+        if (response.success) {
+          this.products = Array.isArray(response.data) ? response.data : response.data.data
+        } else {
+          console.error('Ошибка загрузки товаров')
+          this.products = []
+        }
+      } catch (error) {
+        console.error('Ошибка загрузки товаров:', error)
+        this.products = []
+      }
+    },
+    
+    async loadProductClaims() {
+      if (!this.localProduct || !this.localProduct.id) return
+      
+      this.claimsLoading = true
+      try {
+        const response = await ClaimAPI.getClaimsByProduct(this.localProduct.id)
+        if (response.success) {
+          this.productClaims = response.data
+        } else {
+          this.productClaims = []
+        }
+      } catch (error) {
+        console.error('Ошибка загрузки претензий товара:', error)
+        this.productClaims = []
+      } finally {
+        this.claimsLoading = false
+      }
+    },
+    
+    viewClaimDetails(claim) {
+      this.selectedClaim = claim
+      this.showClaimViewForm = true
+    },
+    
+    closeClaimViewForm() {
+      console.log('ProductViewForm: closeClaimViewForm called')
+      console.log('ProductViewForm: showClaimEditForm before close:', this.showClaimEditForm)
+      this.showClaimViewForm = false
+      // Не сбрасываем selectedClaim, если открываем форму редактирования
+      if (!this.showClaimEditForm) {
+        this.selectedClaim = null
+      }
+      console.log('ProductViewForm: selectedClaim after close:', this.selectedClaim)
+    },
+    
+    closeClaimEditForm() {
+      this.showClaimEditForm = false
+      this.selectedClaim = null
+    },
+    
+    onClaimSaved() {
+      this.closeClaimEditForm()
+      // Обновляем список претензий товара
+      this.loadProductClaims()
+      // Обновляем локальную копию товара для обновления счетчиков
+      this.updateLocalProduct()
+    },
+    
+    editClaimFromProduct(claim) {
+      console.log('ProductViewForm: editClaimFromProduct called with:', claim)
+      // Сначала устанавливаем selectedClaim и показываем форму редактирования
+      this.selectedClaim = claim
+      this.showClaimEditForm = true
+      // Затем закрываем форму просмотра
+      this.closeClaimViewForm()
+    },
+    
+    async deleteClaimFromProduct(claim) {
+      try {
+        const response = await ClaimAPI.deleteClaim(claim.id)
+        if (response.success) {
+          console.log('Претензия успешно удалена')
+          // Обновляем список претензий товара
+          await this.loadProductClaims()
+          // Обновляем локальную копию товара для обновления счетчиков
+          await this.updateLocalProduct()
+        } else {
+          console.error('Ошибка удаления претензии:', response.message)
+        }
+      } catch (error) {
+        console.error('Ошибка удаления претензии:', error)
+      }
+      this.closeClaimViewForm()
+    },
+    
+    getStatusLabel(status) {
+      const labels = {
+        'pending': 'Ожидает рассмотрения',
+        'in_progress': 'В работе',
+        'resolved': 'Решена',
+        'rejected': 'Отклонена'
+      }
+      return labels[status] || status
     },
     
     async updateLocalProduct() {
@@ -392,20 +538,67 @@ export default {
   border-radius: 4px;
 }
 
-.claims-summary {
+.claims-list {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 8px;
 }
 
-.claims-total {
-  font-weight: 600;
-  color: #333;
+.claim-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
 }
 
-.claims-active {
-  color: #dc3545;
+.claim-item:last-child {
+  margin-bottom: 0;
+}
+
+.claim-title {
+  cursor: pointer;
+  color: #007bff;
+  flex: 1;
+}
+
+.claim-title:hover {
+  background: #e3f2fd;
+}
+
+.claim-status {
+  padding: 2px 6px;
+  border-radius: 8px;
+  font-size: 11px;
   font-weight: 500;
+  text-transform: uppercase;
+}
+
+.claim-status.status-pending {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.claim-status.status-in_progress {
+  background: #cce5ff;
+  color: #004085;
+}
+
+.claim-status.status-resolved {
+  background: #d4edda;
+  color: #155724;
+}
+
+.claim-status.status-rejected {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.no-claims {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+  font-style: italic;
 }
 
 textarea.form-control {
