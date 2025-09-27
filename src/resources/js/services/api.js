@@ -326,3 +326,42 @@ export class AuthAPI {
         return data
     }
 }
+
+// API сервис для потребителей
+export class ConsumerAPI {
+    static baseURL = '/api/consumers'
+
+    // Получить список потребителей
+    static async getConsumers(search = '') {
+        const url = search ? `${this.baseURL}?search=${encodeURIComponent(search)}` : this.baseURL
+        return apiRequest(url)
+    }
+
+    // Создать потребителя
+    static async createConsumer(data) {
+        return apiRequest(this.baseURL, {
+            method: 'POST',
+            body: JSON.stringify(data)
+        })
+    }
+
+    // Получить потребителя
+    static async getConsumer(id) {
+        return apiRequest(`${this.baseURL}/${id}`)
+    }
+
+    // Обновить потребителя
+    static async updateConsumer(id, data) {
+        return apiRequest(`${this.baseURL}/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(data)
+        })
+    }
+
+    // Удалить потребителя
+    static async deleteConsumer(id) {
+        return apiRequest(`${this.baseURL}/${id}`, {
+            method: 'DELETE'
+        })
+    }
+}

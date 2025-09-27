@@ -63,7 +63,7 @@ class ProductController extends Controller
     public function show(string $id): JsonResponse
     {
         $user = auth()->user();
-        $product = Product::with(['seller', 'user'])
+        $product = Product::with(['seller', 'consumer', 'user'])
             ->where('user_id', $user->id)
             ->find($id);
 
@@ -95,6 +95,7 @@ class ProductController extends Controller
                 'date_of_buying' => 'required|date|before_or_equal:today',
                 'warranty_period' => 'nullable|integer|min:1|max:120',
                 'seller_id' => 'required|uuid|exists:sellers,id',
+                'consumer_id' => 'nullable|uuid|exists:consumers,id',
                 'claim_id' => 'nullable|uuid'
             ]);
 
@@ -102,7 +103,7 @@ class ProductController extends Controller
             $validated['user_id'] = auth()->id();
 
             $product = Product::create($validated);
-            $product->load(['seller', 'user']);
+            $product->load(['seller', 'consumer', 'user']);
 
             return response()->json([
                 'success' => true,
@@ -143,11 +144,12 @@ class ProductController extends Controller
                 'date_of_buying' => 'sometimes|required|date|before_or_equal:today',
                 'warranty_period' => 'nullable|integer|min:1|max:120',
                 'seller_id' => 'sometimes|required|uuid|exists:sellers,id',
+                'consumer_id' => 'nullable|uuid|exists:consumers,id',
                 'claim_id' => 'nullable|uuid'
             ]);
 
             $product->update($validated);
-            $product->load(['seller']);
+            $product->load(['seller', 'consumer']);
 
             return response()->json([
                 'success' => true,

@@ -19,6 +19,9 @@
             <router-link to="/sellers" class="nav-item">Продавцы</router-link>
           </li>
           <li>
+            <router-link to="/consumers" class="nav-item">Потребители</router-link>
+          </li>
+          <li>
             <router-link to="/claims" class="nav-item">Претензии</router-link>
           </li>
         </template>

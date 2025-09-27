@@ -116,6 +116,30 @@
           </div>
 
           <div class="form-group">
+            <label for="consumer_id">Потребитель</label>
+            <div class="consumer-input-group">
+              <select 
+                id="consumer_id"
+                v-model="form.consumer_id" 
+                class="form-control"
+                :class="{ 'is-invalid': errors.consumer_id }"
+              >
+                <option value="">Выберите потребителя</option>
+                <option v-for="consumer in consumers" :key="consumer.id" :value="consumer.id">
+                  {{ consumer.full_name }}
+                </option>
+              </select>
+              <button type="button" @click="openConsumerModal" class="btn btn-outline-primary btn-sm">
+                <i class="fas fa-plus"></i>
+                Создать
+              </button>
+            </div>
+            <div v-if="errors.consumer_id" class="invalid-feedback">
+              {{ errors.consumer_id[0] }}
+            </div>
+          </div>
+
+          <div class="form-group">
             <label for="seller_id">Продавец *</label>
             <div class="seller-input-group">
               <select 
@@ -226,11 +250,176 @@
         </div>
       </div>
     </div>
+
+    <!-- Modal для создания потребителя -->
+    <div v-if="showConsumerModal" class="modal-overlay" @click="closeConsumerModal">
+      <div class="modal" @click.stop>
+        <div class="modal-header">
+          <h3>Создать потребителя</h3>
+          <button @click="closeConsumerModal" class="close-btn">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        
+        <div class="modal-body">
+          <form @submit.prevent="submitConsumerForm">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="consumer_last_name">Фамилия *</label>
+                <input 
+                  id="consumer_last_name"
+                  v-model="consumerForm.last_name" 
+                  type="text" 
+                  class="form-control"
+                  :class="{ 'is-invalid': consumerErrors.last_name }"
+                  placeholder="Фамилия"
+                  required
+                />
+                <div v-if="consumerErrors.last_name" class="invalid-feedback">
+                  {{ consumerErrors.last_name[0] }}
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="consumer_first_name">Имя *</label>
+                <input 
+                  id="consumer_first_name"
+                  v-model="consumerForm.first_name" 
+                  type="text" 
+                  class="form-control"
+                  :class="{ 'is-invalid': consumerErrors.first_name }"
+                  placeholder="Имя"
+                  required
+                />
+                <div v-if="consumerErrors.first_name" class="invalid-feedback">
+                  {{ consumerErrors.first_name[0] }}
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="consumer_middle_name">Отчество</label>
+                <input 
+                  id="consumer_middle_name"
+                  v-model="consumerForm.middle_name" 
+                  type="text" 
+                  class="form-control"
+                  :class="{ 'is-invalid': consumerErrors.middle_name }"
+                  placeholder="Отчество"
+                />
+                <div v-if="consumerErrors.middle_name" class="invalid-feedback">
+                  {{ consumerErrors.middle_name[0] }}
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="consumer_address">Адрес *</label>
+              <textarea 
+                id="consumer_address"
+                v-model="consumerForm.address" 
+                class="form-control"
+                :class="{ 'is-invalid': consumerErrors.address }"
+                placeholder="Полный адрес"
+                rows="3"
+                required
+              ></textarea>
+              <div v-if="consumerErrors.address" class="invalid-feedback">
+                {{ consumerErrors.address[0] }}
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="consumer_passport">Паспорт *</label>
+                <input 
+                  id="consumer_passport"
+                  v-model="consumerForm.passport" 
+                  type="text" 
+                  class="form-control"
+                  :class="{ 'is-invalid': consumerErrors.passport }"
+                  placeholder="1234567890"
+                  maxlength="10"
+                  pattern="[0-9]{10}"
+                  required
+                />
+                <div v-if="consumerErrors.passport" class="invalid-feedback">
+                  {{ consumerErrors.passport[0] }}
+                </div>
+                <small class="form-text text-muted">
+                  10 цифр серии и номера паспорта
+                </small>
+              </div>
+
+              <div class="form-group">
+                <label for="consumer_inn">ИНН</label>
+                <input 
+                  id="consumer_inn"
+                  v-model="consumerForm.inn" 
+                  type="text" 
+                  class="form-control"
+                  :class="{ 'is-invalid': consumerErrors.inn }"
+                  placeholder="123456789012"
+                  maxlength="12"
+                  pattern="[0-9]{12}"
+                />
+                <div v-if="consumerErrors.inn" class="invalid-feedback">
+                  {{ consumerErrors.inn[0] }}
+                </div>
+                <small class="form-text text-muted">
+                  12 цифр ИНН (для физических лиц)
+                </small>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="consumer_passport_issued_by">Кем выдан паспорт</label>
+              <input 
+                id="consumer_passport_issued_by"
+                v-model="consumerForm.passport_issued_by" 
+                type="text" 
+                class="form-control"
+                :class="{ 'is-invalid': consumerErrors.passport_issued_by }"
+                placeholder="Например: ОТДЕЛЕНИЕМ УФМС РОССИИ"
+                maxlength="70"
+              />
+              <div v-if="consumerErrors.passport_issued_by" class="invalid-feedback">
+                {{ consumerErrors.passport_issued_by[0] }}
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="consumer_passport_issued_date">Дата выдачи паспорта</label>
+              <input 
+                id="consumer_passport_issued_date"
+                v-model="consumerForm.passport_issued_date" 
+                type="date" 
+                class="form-control"
+                :class="{ 'is-invalid': consumerErrors.passport_issued_date }"
+                :max="today"
+              />
+              <div v-if="consumerErrors.passport_issued_date" class="invalid-feedback">
+                {{ consumerErrors.passport_issued_date[0] }}
+              </div>
+            </div>
+
+            <div class="modal-footer">
+              <button type="button" @click="closeConsumerModal" class="btn btn-secondary">
+                Отмена
+              </button>
+              <button type="submit" :disabled="consumerLoading" class="btn btn-primary">
+                <i v-if="consumerLoading" class="fas fa-spinner fa-spin"></i>
+                Создать
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
-import { ProductAPI, SellerAPI } from '../services/api.js'
+import { ProductAPI, SellerAPI, ConsumerAPI } from '../services/api.js'
 
 export default {
   name: 'ProductForm',
@@ -240,6 +429,10 @@ export default {
       default: null
     },
     sellers: {
+      type: Array,
+      default: () => []
+    },
+    consumers: {
       type: Array,
       default: () => []
     }
@@ -254,7 +447,8 @@ export default {
         price: null,
         date_of_buying: '',
         warranty_period: null,
-        seller_id: ''
+        seller_id: '',
+        consumer_id: ''
       },
       errors: {},
       loading: false,
@@ -265,7 +459,20 @@ export default {
         ogrn: ''
       },
       sellerErrors: {},
-      sellerLoading: false
+      sellerLoading: false,
+      showConsumerModal: false,
+      consumerForm: {
+        first_name: '',
+        last_name: '',
+        middle_name: '',
+        address: '',
+        passport: '',
+        passport_issued_by: '',
+        passport_issued_date: '',
+        inn: ''
+      },
+      consumerErrors: {},
+      consumerLoading: false
     }
   },
   computed: {
@@ -290,7 +497,8 @@ export default {
         price: this.product.price || null,
         date_of_buying: this.product.date_of_buying || '',
         warranty_period: this.product.warranty_period || null,
-        seller_id: this.product.seller_id || ''
+        seller_id: this.product.seller_id || '',
+        consumer_id: this.product.consumer_id || ''
       }
     },
     
@@ -377,6 +585,66 @@ export default {
         this.$toast.error('Произошла ошибка при создании продавца')
       } finally {
         this.sellerLoading = false
+      }
+    },
+    
+    // Методы для работы с потребителями
+    openConsumerModal() {
+      this.showConsumerModal = true
+      this.consumerForm = {
+        first_name: '',
+        last_name: '',
+        middle_name: '',
+        address: '',
+        passport: '',
+        passport_issued_by: '',
+        passport_issued_date: '',
+        inn: ''
+      }
+      this.consumerErrors = {}
+    },
+    
+    closeConsumerModal() {
+      this.showConsumerModal = false
+      this.consumerForm = {
+        first_name: '',
+        last_name: '',
+        middle_name: '',
+        address: '',
+        passport: '',
+        passport_issued_by: '',
+        passport_issued_date: '',
+        inn: ''
+      }
+      this.consumerErrors = {}
+    },
+    
+    async submitConsumerForm() {
+      this.consumerLoading = true
+      this.consumerErrors = {}
+      
+      try {
+        const response = await ConsumerAPI.createConsumer(this.consumerForm)
+        
+        if (response.success) {
+          console.log('Потребитель успешно создан')
+          this.closeConsumerModal()
+          // Обновляем список потребителей
+          this.$emit('consumer-created', response.data)
+          // Автоматически выбираем созданного потребителя
+          this.form.consumer_id = response.data.id
+        } else {
+          if (response.errors) {
+            this.consumerErrors = response.errors
+          } else {
+            this.$toast.error(response.message || 'Произошла ошибка')
+          }
+        }
+      } catch (error) {
+        console.error('Error creating consumer:', error)
+        this.$toast.error('Произошла ошибка при создании потребителя')
+      } finally {
+        this.consumerLoading = false
       }
     }
   }
@@ -487,7 +755,17 @@ export default {
   align-items: flex-end;
 }
 
+.consumer-input-group {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+
 .seller-input-group .form-control {
+  flex: 1;
+}
+
+.consumer-input-group .form-control {
   flex: 1;
 }
 

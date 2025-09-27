@@ -30,6 +30,162 @@
             </div>
           </div>
 
+          <!-- Секция о ремонте -->
+          <div class="form-section">
+            <h4>Информация о ремонте</h4>
+            
+            <div class="form-group">
+              <label>Был ли товар ранее в ремонте? *</label>
+              <div class="radio-group">
+                <label class="radio-option">
+                  <input 
+                    type="radio" 
+                    v-model="form.was_in_repair" 
+                    :value="true"
+                  />
+                  <span>Да</span>
+                </label>
+                <label class="radio-option">
+                  <input 
+                    type="radio" 
+                    v-model="form.was_in_repair" 
+                    :value="false"
+                  />
+                  <span>Нет</span>
+                </label>
+              </div>
+            </div>
+
+            <div v-if="form.was_in_repair === true" class="conditional-fields">
+              <div class="form-group">
+                <label for="service_center_documents">Реквизиты документа из сервисного центра</label>
+                <textarea 
+                  id="service_center_documents"
+                  v-model="form.service_center_documents" 
+                  class="form-control"
+                  :class="{ 'is-invalid': errors.service_center_documents }"
+                  placeholder="Введите реквизиты документа из сервисного центра"
+                  rows="3"
+                ></textarea>
+                <div v-if="errors.service_center_documents" class="invalid-feedback">
+                  {{ errors.service_center_documents[0] }}
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label for="previous_defect">С каким недостатком был ранее</label>
+                <textarea 
+                  id="previous_defect"
+                  v-model="form.previous_defect" 
+                  class="form-control"
+                  :class="{ 'is-invalid': errors.previous_defect }"
+                  placeholder="Укажите с каким недостатком был ранее"
+                  rows="3"
+                ></textarea>
+                <div v-if="errors.previous_defect" class="invalid-feedback">
+                  {{ errors.previous_defect[0] }}
+                </div>
+              </div>
+            </div>
+
+            <div v-if="form.was_in_repair === false" class="conditional-fields">
+              <div class="form-group">
+                <label for="current_defect">Какой недостаток был обнаружен</label>
+                <textarea 
+                  id="current_defect"
+                  v-model="form.current_defect" 
+                  class="form-control"
+                  :class="{ 'is-invalid': errors.current_defect }"
+                  placeholder="Укажите какой недостаток был обнаружен"
+                  rows="3"
+                ></textarea>
+                <div v-if="errors.current_defect" class="invalid-feedback">
+                  {{ errors.current_defect[0] }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Секция об экспертизе -->
+          <div class="form-section">
+            <h4>Информация об экспертизе</h4>
+            
+            <div class="form-group">
+              <label>Проводилась ли экспертиза или проверка качества? *</label>
+              <div class="radio-group">
+                <label class="radio-option">
+                  <input 
+                    type="radio" 
+                    v-model="form.expertiseConducted" 
+                    :value="true"
+                  />
+                  <span>Экспертиза (Проверка качества)</span>
+                </label>
+                <label class="radio-option">
+                  <input 
+                    type="radio" 
+                    v-model="form.expertiseConducted" 
+                    :value="false"
+                    :disabled="!canSelectNoExpertise"
+                  />
+                  <span>Экспертиза (Проверка качества) не проводилась</span>
+                </label>
+              </div>
+              <div v-if="!canSelectNoExpertise && form.expertiseConducted === false" class="warning-message">
+                ⚠️ Этот вариант доступен только если гарантийный срок товара ещё не закончился или не был указан
+              </div>
+            </div>
+
+            <div v-if="form.expertiseConducted === true" class="conditional-fields">
+              <div class="form-group">
+                <label for="expertiseData">Данные о проведенной экспертизе</label>
+                <textarea 
+                  id="expertiseData"
+                  v-model="form.expertiseData" 
+                  class="form-control"
+                  :class="{ 'is-invalid': errors.expertiseData }"
+                  placeholder="Укажите данные о проведенной экспертизе"
+                  rows="3"
+                ></textarea>
+                <div v-if="errors.expertiseData" class="invalid-feedback">
+                  {{ errors.expertiseData[0] }}
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label for="expertiseDefect">Недостаток согласно экспертизе</label>
+                <textarea 
+                  id="expertiseDefect"
+                  v-model="form.expertiseDefect" 
+                  class="form-control"
+                  :class="{ 'is-invalid': errors.expertiseDefect }"
+                  placeholder="Опишите недостаток согласно экспертизе"
+                  rows="3"
+                ></textarea>
+                <div v-if="errors.expertiseDefect" class="invalid-feedback">
+                  {{ errors.expertiseDefect[0] }}
+                </div>
+              </div>
+            </div>
+
+            <div v-if="form.expertiseConducted === false" class="conditional-fields">
+              <div class="form-group">
+                <label for="actualDefect">Укажите настоящий недостаток</label>
+                <textarea 
+                  id="actualDefect"
+                  v-model="form.actualDefect" 
+                  class="form-control"
+                  :class="{ 'is-invalid': errors.actualDefect }"
+                  placeholder="Опишите настоящий недостаток товара"
+                  rows="3"
+                ></textarea>
+                <div v-if="errors.actualDefect" class="invalid-feedback">
+                  {{ errors.actualDefect[0] }}
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div class="form-group">
             <label for="type">Тип претензии *</label>
             <select 
@@ -148,25 +304,15 @@
         </form>
       </div>
     </div>
-
-    <!-- Модальное окно с вопросом о ремонте -->
-    <RepairQuestionModal 
-      v-if="showRepairModal"
-      @close="closeRepairModal"
-      @save="onRepairDataSaved"
-    />
   </div>
 </template>
 
 <script>
 import { ClaimAPI, ProductAPI } from '../services/api.js'
-import RepairQuestionModal from './RepairQuestionModal.vue'
 
 export default {
   name: 'ClaimForm',
-  components: {
-    RepairQuestionModal
-  },
+  components: {},
   props: {
     claim: {
       type: Object,
@@ -188,19 +334,41 @@ export default {
         service_center_documents: '',
         previous_defect: '',
         current_defect: '',
+        expertiseConducted: null,
+        expertiseData: '',
+        expertiseDefect: '',
+        actualDefect: '',
         claimed_amount: '',
         claim_date: '',
         resolution_date: '',
         resolution_notes: ''
       },
       errors: {},
-      loading: false,
-      showRepairModal: false
+      loading: false
     }
   },
   computed: {
     isEdit() {
       return !!this.claim
+    },
+    
+    canSelectNoExpertise() {
+      if (!this.form.product_id) return true
+      
+      const product = this.products.find(p => p.id === this.form.product_id)
+      if (!product) return true
+      
+      // Если гарантийный срок не указан, можно выбрать "не проводилась"
+      if (!product.warranty_period) return true
+      
+      // Проверяем, не истёк ли гарантийный срок
+      if (!product.date_of_buying) return true
+      
+      const purchaseDate = new Date(product.date_of_buying)
+      const warrantyEndDate = new Date(purchaseDate)
+      warrantyEndDate.setMonth(warrantyEndDate.getMonth() + product.warranty_period)
+      
+      return warrantyEndDate >= new Date()
     }
   },
   watch: {
@@ -234,6 +402,10 @@ export default {
         service_center_documents: this.claim.service_center_documents || '',
         previous_defect: this.claim.previous_defect || '',
         current_defect: this.claim.current_defect || '',
+        expertiseConducted: this.claim.expertiseConducted ?? null,
+        expertiseData: this.claim.expertiseData || '',
+        expertiseDefect: this.claim.expertiseDefect || '',
+        actualDefect: this.claim.actualDefect || '',
         claimed_amount: this.claim.claimed_amount || '',
         claim_date: this.claim.claim_date || '',
         resolution_date: this.claim.resolution_date || '',
@@ -275,23 +447,8 @@ export default {
     },
     
     onProductChange() {
-      // При изменении товара показываем модальное окно с вопросом о ремонте
-      if (this.form.product_id && !this.isEdit) {
-        this.showRepairModal = true
-      }
-    },
-    
-    onRepairDataSaved(repairData) {
-      // Сохраняем данные о ремонте в форму
-      this.form.was_in_repair = repairData.was_in_repair
-      this.form.service_center_documents = repairData.service_center_documents
-      this.form.previous_defect = repairData.previous_defect
-      this.form.current_defect = repairData.current_defect
-      this.showRepairModal = false
-    },
-    
-    closeRepairModal() {
-      this.showRepairModal = false
+      // При изменении товара больше не показываем модальные окна
+      // Все поля теперь встроены в форму
     },
     
     closeModal() {
@@ -371,6 +528,74 @@ export default {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
+}
+
+.form-section {
+  margin: 20px 0;
+  padding: 20px;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  background-color: #f8f9fa;
+}
+
+.form-section h4 {
+  margin: 0 0 20px 0;
+  color: #333;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.radio-option {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 10px;
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.radio-option:hover {
+  background-color: #e9ecef;
+}
+
+.radio-option input[type="radio"] {
+  margin-right: 10px;
+}
+
+.radio-option input[type="radio"]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.radio-option:has(input[type="radio"]:disabled) {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.conditional-fields {
+  margin-top: 15px;
+  padding: 15px;
+  background-color: white;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+}
+
+.warning-message {
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 4px;
+  color: #856404;
+  font-size: 14px;
 }
 
 .form-group label {

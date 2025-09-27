@@ -37,6 +37,11 @@ const routes = [
         meta: { requiresAuth: true, title: 'Продавцы' }
     },
     { 
+        path: '/consumers', 
+        component: () => import('./pages/Consumers.vue'),
+        meta: { requiresAuth: true, title: 'Потребители' }
+    },
+    { 
         path: '/claims', 
         component: Claims,
         meta: { requiresAuth: true, title: 'Претензии' }

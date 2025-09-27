@@ -92,6 +92,18 @@
                      />
                    </div>
 
+                   <div class="form-group" v-if="localProduct.consumer">
+                     <label for="consumer_name">Потребитель</label>
+                     <input 
+                       id="consumer_name"
+                       :value="localProduct.consumer.full_name" 
+                       type="text" 
+                       class="form-control consumer-field"
+                       readonly
+                       @click="showConsumerDetails"
+                     />
+                   </div>
+
                    <div class="form-group" v-if="localProduct.claims_count > 0">
                      <label for="claims_info">Претензии</label>
                      <div class="claims-info">
@@ -196,6 +208,96 @@
         @close="closeClaimEditForm"
         @saved="onClaimSaved"
       />
+
+      <!-- Модальное окно с информацией о потребителе -->
+      <div v-if="showConsumerModal" class="modal-overlay" @click="closeConsumerModal">
+        <div class="modal" @click.stop>
+          <div class="modal-header">
+            <h3>Информация о потребителе</h3>
+            <button @click="closeConsumerModal" class="close-btn">
+              ✕
+            </button>
+          </div>
+          
+          <div class="modal-body" v-if="selectedConsumer">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="consumer_last_name">Фамилия</label>
+                <input 
+                  id="consumer_last_name"
+                  :value="selectedConsumer.last_name" 
+                  type="text" 
+                  class="form-control"
+                  readonly
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="consumer_first_name">Имя</label>
+                <input 
+                  id="consumer_first_name"
+                  :value="selectedConsumer.first_name" 
+                  type="text" 
+                  class="form-control"
+                  readonly
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="consumer_middle_name">Отчество</label>
+                <input 
+                  id="consumer_middle_name"
+                  :value="selectedConsumer.middle_name || '-'" 
+                  type="text" 
+                  class="form-control"
+                  readonly
+                />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="consumer_address">Адрес</label>
+              <textarea 
+                id="consumer_address"
+                :value="selectedConsumer.address" 
+                class="form-control"
+                readonly
+                rows="3"
+              ></textarea>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="consumer_passport">Паспорт</label>
+                <input 
+                  id="consumer_passport"
+                  :value="selectedConsumer.formatted_passport" 
+                  type="text" 
+                  class="form-control"
+                  readonly
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="consumer_inn">ИНН</label>
+                <input 
+                  id="consumer_inn"
+                  :value="selectedConsumer.formatted_inn || '-'" 
+                  type="text" 
+                  class="form-control"
+                  readonly
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" @click="closeConsumerModal" class="btn btn-secondary">
+              Закрыть
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 </template>
 
@@ -230,7 +332,9 @@ export default {
       selectedClaim: null,
       productClaims: [],
       claimsLoading: false,
-      products: []
+      products: [],
+      showConsumerModal: false,
+      selectedConsumer: null
     }
   },
   watch: {
@@ -428,6 +532,19 @@ export default {
           console.error('Ошибка обновления данных товара:', error)
         }
       }
+    },
+    
+    // Методы для работы с потребителем
+    showConsumerDetails() {
+      if (this.localProduct && this.localProduct.consumer) {
+        this.selectedConsumer = this.localProduct.consumer
+        this.showConsumerModal = true
+      }
+    },
+    
+    closeConsumerModal() {
+      this.showConsumerModal = false
+      this.selectedConsumer = null
     }
   }
 }
@@ -559,6 +676,15 @@ export default {
 }
 
 .seller-field:hover {
+  background: #e3f2fd;
+}
+
+.consumer-field {
+  cursor: pointer;
+  color: #007bff;
+}
+
+.consumer-field:hover {
   background: #e3f2fd;
 }
 

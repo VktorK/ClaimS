@@ -18,6 +18,10 @@ class Claim extends BaseModel
         'service_center_documents',
         'previous_defect',
         'current_defect',
+        'expertiseConducted',
+        'expertiseData',
+        'expertiseDefect',
+        'actualDefect',
         'claimed_amount',
         'claim_date',
         'resolution_date',
@@ -30,6 +34,7 @@ class Claim extends BaseModel
      */
     protected $casts = [
         'was_in_repair' => 'boolean',
+        'expertiseConducted' => 'boolean',
         'claimed_amount' => 'decimal:2',
         'claim_date' => 'date',
         'resolution_date' => 'date',

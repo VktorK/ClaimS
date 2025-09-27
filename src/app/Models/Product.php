@@ -19,6 +19,7 @@ class Product extends BaseModel
         'date_of_buying',
         'warranty_period',
         'seller_id',
+        'consumer_id',
         'claim_id',
         'user_id',
     ];
@@ -45,6 +46,14 @@ class Product extends BaseModel
     public function seller(): BelongsTo
     {
         return $this->belongsTo(Seller::class, 'seller_id');
+    }
+
+    /**
+     * Связь с потребителем
+     */
+    public function consumer(): BelongsTo
+    {
+        return $this->belongsTo(Consumer::class, 'consumer_id');
     }
 
     /**

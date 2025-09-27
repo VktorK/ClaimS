@@ -74,6 +74,102 @@
             </div>
           </div>
 
+          <!-- Информация о ремонте -->
+          <div class="form-section">
+            <h4>Информация о ремонте</h4>
+            
+            <div class="form-group">
+              <label>Был ли товар ранее в ремонте?</label>
+              <input 
+                :value="claim.was_in_repair ? 'Да' : 'Нет'" 
+                type="text" 
+                class="form-control"
+                readonly
+              />
+            </div>
+
+            <div v-if="claim.was_in_repair && claim.service_center_documents" class="form-group">
+              <label for="service_center_documents">Реквизиты документа из сервисного центра</label>
+              <textarea 
+                id="service_center_documents"
+                :value="claim.service_center_documents" 
+                class="form-control"
+                readonly
+                rows="3"
+              ></textarea>
+            </div>
+            
+            <div v-if="claim.was_in_repair && claim.previous_defect" class="form-group">
+              <label for="previous_defect">С каким недостатком был ранее</label>
+              <textarea 
+                id="previous_defect"
+                :value="claim.previous_defect" 
+                class="form-control"
+                readonly
+                rows="3"
+              ></textarea>
+            </div>
+
+            <div v-if="!claim.was_in_repair && claim.current_defect" class="form-group">
+              <label for="current_defect">Какой недостаток был обнаружен</label>
+              <textarea 
+                id="current_defect"
+                :value="claim.current_defect" 
+                class="form-control"
+                readonly
+                rows="3"
+              ></textarea>
+            </div>
+          </div>
+
+          <!-- Информация об экспертизе -->
+          <div class="form-section">
+            <h4>Информация об экспертизе</h4>
+            
+            <div class="form-group">
+              <label>Проводилась ли экспертиза или проверка качества?</label>
+              <input 
+                :value="claim.expertiseConducted ? 'Экспертиза (Проверка качества)' : 'Экспертиза (Проверка качества) не проводилась'" 
+                type="text" 
+                class="form-control"
+                readonly
+              />
+            </div>
+
+            <div v-if="claim.expertiseConducted && claim.expertiseData" class="form-group">
+              <label for="expertiseData">Данные о проведенной экспертизе</label>
+              <textarea 
+                id="expertiseData"
+                :value="claim.expertiseData" 
+                class="form-control"
+                readonly
+                rows="3"
+              ></textarea>
+            </div>
+            
+            <div v-if="claim.expertiseConducted && claim.expertiseDefect" class="form-group">
+              <label for="expertiseDefect">Недостаток согласно экспертизе</label>
+              <textarea 
+                id="expertiseDefect"
+                :value="claim.expertiseDefect" 
+                class="form-control"
+                readonly
+                rows="3"
+              ></textarea>
+            </div>
+
+            <div v-if="!claim.expertiseConducted && claim.actualDefect" class="form-group">
+              <label for="actualDefect">Настоящий недостаток</label>
+              <textarea 
+                id="actualDefect"
+                :value="claim.actualDefect" 
+                class="form-control"
+                readonly
+                rows="3"
+              ></textarea>
+            </div>
+          </div>
+
           <!-- Информация о решении -->
           <div class="form-section" v-if="claim.resolution_date || claim.resolution_notes">
             <h4>Информация о решении</h4>

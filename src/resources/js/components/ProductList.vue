@@ -129,9 +129,11 @@
       v-if="showModal"
       :product="selectedProduct"
       :sellers="sellers"
+      :consumers="consumers"
       @close="closeModal"
       @saved="onProductSaved"
       @seller-created="onSellerCreated"
+      @consumer-created="onConsumerCreated"
     />
 
            <!-- Форма просмотра товара -->
@@ -201,7 +203,7 @@
 </template>
 
 <script>
-import { ProductAPI, SellerAPI, AuthAPI, ClaimAPI } from '../services/api.js'
+import { ProductAPI, SellerAPI, AuthAPI, ClaimAPI, ConsumerAPI } from '../services/api.js'
 import ProductForm from './ProductForm.vue'
 import ProductViewForm from './ProductViewForm.vue'
 
@@ -215,6 +217,7 @@ export default {
            return {
              products: [],
              sellers: [],
+             consumers: [],
              loading: false,
              search: '',
              selectedSeller: '',
@@ -234,6 +237,7 @@ export default {
   mounted() {
     this.loadProducts()
     this.loadSellers()
+    this.loadConsumers()
   },
   methods: {
     async loadProducts() {
@@ -285,6 +289,19 @@ export default {
           this.$router.push('/login')
           return
         }
+      }
+    },
+    
+    async loadConsumers() {
+      try {
+        const response = await ConsumerAPI.getConsumers()
+        if (response.success) {
+          this.consumers = response.data
+        } else {
+          console.error('Ошибка загрузки потребителей')
+        }
+      } catch (error) {
+        console.error('Error loading consumers:', error)
       }
     },
     
@@ -363,6 +380,11 @@ export default {
     onSellerCreated(newSeller) {
       // Добавляем нового продавца в список
       this.sellers.push(newSeller)
+    },
+    
+    onConsumerCreated(newConsumer) {
+      // Добавляем нового потребителя в список
+      this.consumers.push(newConsumer)
     },
     
     editSellerFromProduct(seller) {

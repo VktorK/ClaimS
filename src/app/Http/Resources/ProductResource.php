@@ -52,6 +52,19 @@ class ProductResource extends JsonResource
                 ];
             }),
             
+            'consumer' => $this->whenLoaded('consumer', function () {
+                return [
+                    'id' => $this->consumer->id,
+                    'full_name' => $this->consumer->full_name,
+                    'short_name' => $this->consumer->short_name,
+                    'address' => $this->consumer->address,
+                    'passport' => $this->consumer->passport,
+                    'formatted_passport' => $this->consumer->formatted_passport,
+                    'inn' => $this->consumer->inn,
+                    'formatted_inn' => $this->consumer->formatted_inn,
+                ];
+            }),
+            
             'claim' => $this->whenLoaded('claim', function () {
                 return [
                     'id' => $this->claim->id,

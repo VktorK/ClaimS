@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SellerController;
+use App\Http\Controllers\ConsumerController;
 use App\Http\Controllers\ClaimController;
 
 /*
@@ -49,6 +50,15 @@ Route::middleware('auth:api')->prefix('sellers')->group(function () {
     Route::get('/{id}', [SellerController::class, 'show']);
     Route::put('/{id}', [SellerController::class, 'update']);
     Route::delete('/{id}', [SellerController::class, 'destroy']);
+});
+
+// Маршруты для потребителей
+Route::middleware('auth:api')->prefix('consumers')->group(function () {
+    Route::get('/', [ConsumerController::class, 'index']);
+    Route::post('/', [ConsumerController::class, 'store']);
+    Route::get('/{id}', [ConsumerController::class, 'show']);
+    Route::put('/{id}', [ConsumerController::class, 'update']);
+    Route::delete('/{id}', [ConsumerController::class, 'destroy']);
 });
 
 // Маршруты для товаров
