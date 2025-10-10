@@ -32,12 +32,12 @@
 
     <!-- Список шаблонов -->
     <div class="templates-grid" v-if="!loading">
-      <div v-for="template in templates" :key="template.id" class="template-card">
+      <div v-for="template in templates" :key="template.id" class="template-card" @click="viewTemplate(template)">
         <div class="template-header">
           <h3 class="template-name" :title="template.name">
             {{ template.name }}
           </h3>
-          <div class="template-actions">
+          <div class="template-actions" @click.stop>
             <button @click="viewTemplate(template)" class="btn btn-sm btn-info" title="Просмотр">
               👁️
             </button>
@@ -267,11 +267,13 @@ export default {
   border-radius: 8px;
   padding: 20px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: box-shadow 0.2s;
+  transition: all 0.2s;
+  cursor: pointer;
 }
 
 .template-card:hover {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
 }
 
 .template-header {

@@ -12,6 +12,7 @@ class Claim extends BaseModel
     protected $fillable = [
         'user_id',
         'product_id',
+        'template_id',
         'status',
         'type',
         'was_in_repair',
@@ -55,6 +56,14 @@ class Claim extends BaseModel
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class, 'product_id');
+    }
+
+    /**
+     * Связь с шаблоном претензии
+     */
+    public function template(): BelongsTo
+    {
+        return $this->belongsTo(ClaimTemplate::class, 'template_id');
     }
 
     /**

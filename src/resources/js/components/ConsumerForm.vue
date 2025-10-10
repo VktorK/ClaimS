@@ -1,6 +1,6 @@
 <template>
-  <div class="modal-overlay" @click="closeModal">
-    <div class="modal large-modal" @click.stop>
+  <div class="modal-overlay">
+    <div class="modal large-modal">
       <div class="modal-header">
         <h3>{{ isEdit ? 'Редактировать потребителя' : 'Добавить потребителя' }}</h3>
         <button @click="closeModal" class="close-btn">

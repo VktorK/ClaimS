@@ -74,6 +74,24 @@
             </div>
           </div>
 
+          <!-- Отрендеренная претензия -->
+          <div class="form-section" v-if="renderedContent">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+              <h4 style="margin: 0;">Содержание претензии</h4>
+              <button 
+                type="button" 
+                @click="downloadClaimDocument" 
+                class="btn btn-success btn-sm"
+                :disabled="downloadingClaim"
+              >
+                <i v-if="downloadingClaim" class="fas fa-spinner fa-spin"></i>
+                <i v-else class="fas fa-download"></i>
+                Скачать DOCX
+              </button>
+            </div>
+            <div class="rendered-template-content" v-html="renderedContent"></div>
+          </div>
+
           <!-- Информация о ремонте -->
           <div class="form-section">
             <h4>Информация о ремонте</h4>
@@ -252,6 +270,8 @@
 </template>
 
 <script>
+import { ClaimAPI } from '../services/api.js'
+
 export default {
   name: 'ClaimViewForm',
   props: {
@@ -263,10 +283,74 @@ export default {
   emits: ['close', 'edit', 'delete'],
   data() {
     return {
-      showProductModal: false
+      showProductModal: false,
+      renderedContent: '',
+      loadingTemplate: false,
+      downloadingClaim: false
+    }
+  },
+  watch: {
+    claim: {
+      handler(newClaim) {
+        if (newClaim && newClaim.template_id) {
+          this.loadRenderedTemplate()
+        } else {
+          this.renderedContent = ''
+        }
+      },
+      immediate: true
     }
   },
   methods: {
+    async loadRenderedTemplate() {
+      if (!this.claim || !this.claim.template_id) {
+        this.renderedContent = ''
+        return
+      }
+
+      this.loadingTemplate = true
+      try {
+        const response = await ClaimAPI.renderClaimTemplate(this.claim.id)
+        if (response.success) {
+          this.renderedContent = response.data.rendered_content
+        } else {
+          console.error('Ошибка загрузки шаблона:', response.message)
+        }
+      } catch (error) {
+        console.error('Ошибка загрузки отрендеренного шаблона:', error)
+      } finally {
+        this.loadingTemplate = false
+      }
+    },
+
+    async downloadClaimDocument() {
+      this.downloadingClaim = true
+      try {
+        const blob = await ClaimAPI.downloadClaim(this.claim.id)
+        
+        // Создаем ссылку для скачивания
+        const url = window.URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        
+        // Формируем имя файла
+        const fileName = `Претензия_${this.claim.product?.title || 'Документ'}_${new Date().toISOString().split('T')[0]}.docx`
+        link.setAttribute('download', fileName)
+        
+        document.body.appendChild(link)
+        link.click()
+        
+        // Очищаем
+        link.remove()
+        window.URL.revokeObjectURL(url)
+      } catch (error) {
+        console.error('Ошибка при скачивании претензии:', error)
+        alert('Ошибка при скачивании претензии. Попробуйте позже.')
+      } finally {
+        this.downloadingClaim = false
+      }
+    },
+
     closeForm() {
       this.$emit('close')
     },
@@ -520,6 +604,54 @@ export default {
 .btn-sm {
   padding: 6px 12px;
   font-size: 12px;
+}
+
+.btn-success {
+  background: #28a745;
+  color: white;
+}
+
+.btn-success:hover:not(:disabled) {
+  background: #218838;
+}
+
+/* Отрендеренный шаблон претензии */
+.rendered-template-content {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 20px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #333;
+  max-height: 500px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.rendered-template-content p {
+  margin-bottom: 10px;
+}
+
+.rendered-template-content strong,
+.rendered-template-content b {
+  font-weight: 600;
+}
+
+.rendered-template-content em,
+.rendered-template-content i {
+  font-style: italic;
+}
+
+.rendered-template-content ul,
+.rendered-template-content ol {
+  margin-left: 20px;
+  margin-bottom: 10px;
+}
+
+.rendered-template-content li {
+  margin-bottom: 5px;
 }
 
 /* Всплывающее окно товара */

@@ -100,11 +100,11 @@
                         v-for="(desc, key) in group"
                         :key="key"
                         type="button"
-                        @click="insertPlaceholderText(`{{${groupKey}.${key}}}`)"
+                        @click="insertPlaceholderText(`{{${key}}}`)"
                         class="placeholder-item"
                         :title="desc"
                       >
-                        {{ groupKey }}.{{ key }}
+                        {{ key }}
                       </button>
                     </div>
                   </div>

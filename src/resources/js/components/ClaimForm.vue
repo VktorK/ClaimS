@@ -369,6 +369,7 @@ export default {
     return {
       form: {
         product_id: '',
+        template_id: '',
         type: '',
         status: 'pending',
         was_in_repair: null,
@@ -442,6 +443,7 @@ export default {
       console.log('ClaimForm: fillForm called with claim:', this.claim)
       this.form = {
         product_id: this.claim.product_id || '',
+        template_id: this.claim.template_id || '',
         type: this.claim.type || '',
         status: this.claim.status || 'pending',
         was_in_repair: this.claim.was_in_repair ?? null,
@@ -456,6 +458,10 @@ export default {
         claim_date: this.claim.claim_date || '',
         resolution_date: this.claim.resolution_date || '',
         resolution_notes: this.claim.resolution_notes || ''
+      }
+      // Если есть template_id, установим его и в selectedTemplateId
+      if (this.claim.template_id) {
+        this.selectedTemplateId = this.claim.template_id
       }
       console.log('ClaimForm: form filled with:', this.form)
     },
@@ -506,14 +512,18 @@ export default {
     async onTemplateChange() {
       if (!this.selectedTemplateId) {
         this.renderedTemplate = ''
+        this.form.template_id = ''
         return
       }
+      
+      // Сохраняем выбранный template_id в форму
+      this.form.template_id = this.selectedTemplateId
       
       try {
         const templateData = this.prepareTemplateData()
         const response = await ClaimTemplateAPI.renderTemplate(this.selectedTemplateId, templateData)
         if (response.success) {
-          this.renderedTemplate = response.data.content
+          this.renderedTemplate = response.data.rendered_content
         }
       } catch (error) {
         console.error('Ошибка рендеринга шаблона:', error)
@@ -534,43 +544,60 @@ export default {
       const seller = selectedProduct.seller || {}
       
       return {
-        consumer: {
-          full_name: consumer.full_name || 'Не указано',
-          short_name: consumer.short_name || 'Не указано',
-          address: consumer.address || 'Не указано',
-          passport: consumer.passport || 'Не указано',
-          formatted_passport: consumer.formatted_passport || 'Не указано',
-          inn: consumer.inn || 'Не указано',
-          formatted_inn: consumer.formatted_inn || 'Не указано',
-          passport_issued_by: consumer.passport_issued_by || 'Не указано',
-          passport_issued_date: consumer.passport_issued_date || 'Не указано'
-        },
-        product: {
-          title: selectedProduct.title || 'Не указано',
-          model: selectedProduct.model || 'Не указано',
-          serial_number: selectedProduct.serial_number || 'Не указано',
-          price: selectedProduct.price || 'Не указано',
-          date_of_buying: selectedProduct.date_of_buying || 'Не указано',
-          warranty_period: selectedProduct.warranty_period || 'Не указано'
-        },
-        seller: {
-          title: seller.title || 'Не указано',
-          address: seller.address || 'Не указано',
-          ogrn: seller.ogrn || 'Не указано'
-        },
-        claim: {
-          type: this.form.type || 'Не указано',
-          status: this.form.status || 'Не указано',
-          created_at: this.form.claim_date || new Date().toISOString().split('T')[0],
-          was_in_repair: this.form.was_in_repair ? 'Да' : 'Нет',
-          service_center_documents: this.form.service_center_documents || 'Не указано',
-          previous_defect: this.form.previous_defect || 'Не указано',
-          current_defect: this.form.current_defect || 'Не указано',
-          expertiseConducted: this.form.expertiseConducted ? 'Да' : 'Нет',
-          expertiseData: this.form.expertiseData || 'Не указано',
-          expertiseDefect: this.form.expertiseDefect || 'Не указано',
-          actualDefect: this.form.actualDefect || 'Не указано'
-        }
+        // Данные претензии (для валидации)
+        product_id: this.form.product_id,
+        type: this.form.type || 'defect',
+        was_in_repair: this.form.was_in_repair || false,
+        service_center_documents: this.form.service_center_documents || '',
+        previous_defect: this.form.previous_defect || '',
+        current_defect: this.form.current_defect || '',
+        expertiseConducted: this.form.expertiseConducted || false,
+        expertiseData: this.form.expertiseData || '',
+        expertiseDefect: this.form.expertiseDefect || '',
+        actualDefect: this.form.actualDefect || '',
+        claimed_amount: this.form.claimed_amount || null,
+        claim_date: this.form.claim_date || new Date().toISOString().split('T')[0],
+        
+        // Данные для подстановки в шаблон (плоская структура)
+        'consumer.full_name': consumer.full_name || '',
+        'consumer.short_name': consumer.short_name || '',
+        'consumer.address': consumer.address || '',
+        'consumer.passport': consumer.passport || '',
+        'consumer.inn': consumer.inn || '',
+        'consumer.passport_issued_by': consumer.passport_issued_by || '',
+        'consumer.passport_issue_date': consumer.passport_issue_date || '',
+        
+        'seller.title': seller.title || '',
+        'seller.short_title': seller.short_title || '',
+        'seller.address': seller.address || '',
+        'seller.inn': seller.inn || '',
+        'seller.ogrn': seller.ogrn || '',
+        'seller.phone': seller.phone || '',
+        'seller.email': seller.email || '',
+        
+        'product.title': selectedProduct.title || '',
+        'product.model': selectedProduct.model || '',
+        'product.serial_number': selectedProduct.serial_number || '',
+        'product.price': selectedProduct.price || '',
+        'product.date_of_buying': selectedProduct.date_of_buying || '',
+        'product.warranty_period': selectedProduct.warranty_period || '',
+        
+        'claim.type': this.form.type || '',
+        'claim.current_defect': this.form.current_defect || '',
+        'claim.previous_repair': this.form.was_in_repair ? 'Да' : 'Нет',
+        'claim.repair_document': this.form.service_center_documents || '',
+        'claim.previous_defect': this.form.previous_defect || '',
+        'claim.expertise_conducted': this.form.expertiseConducted ? 'Да' : 'Нет',
+        'claim.expertise_data': this.form.expertiseData || '',
+        'claim.expertise_defect': this.form.expertiseDefect || '',
+        'claim.real_defect': this.form.actualDefect || '',
+        'claim.claimed_amount': this.form.claimed_amount || '',
+        'claim.claim_date': this.form.claim_date || '',
+        
+        'current_date': new Date().toLocaleDateString('ru-RU'),
+        'current_time': new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
+        'user.name': this.user?.name || '',
+        'user.email': this.user?.email || ''
       }
     },
     

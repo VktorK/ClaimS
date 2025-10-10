@@ -50,7 +50,6 @@
       <path value="$PROJECT_DIR$/src/vendor/nunomaduro/termwind" />
       <path value="$PROJECT_DIR$/src/vendor/nunomaduro/collision" />
       <path value="$PROJECT_DIR$/src/vendor/graham-campbell/result-type" />
-      <path value="$PROJECT_DIR$/src/vendor/livewire/livewire" />
       <path value="$PROJECT_DIR$/src/vendor/composer" />
       <path value="$PROJECT_DIR$/src/vendor/lcobucci/clock" />
       <path value="$PROJECT_DIR$/src/vendor/lcobucci/jwt" />

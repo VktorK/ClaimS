@@ -35,6 +35,7 @@ class ClaimResource extends JsonResource
             'resolution_notes' => $this->resolution_notes,
             'attachments' => $this->attachments,
             'product_id' => $this->product_id,
+            'template_id' => $this->template_id,
             'user_id' => $this->user_id,
             'created_at' => $this->created_at ? $this->created_at->toISOString() : null,
             'updated_at' => $this->updated_at ? $this->updated_at->toISOString() : null,
@@ -49,6 +50,14 @@ class ClaimResource extends JsonResource
                     'price' => $this->product->price,
                     'formatted_price' => $this->product->formatted_price,
                 ];
+            }),
+            
+            'template' => $this->whenLoaded('template', function () {
+                return $this->template ? [
+                    'id' => $this->template->id,
+                    'name' => $this->template->name,
+                    'description' => $this->template->description,
+                ] : null;
             }),
             
             'user' => $this->whenLoaded('user', function () {

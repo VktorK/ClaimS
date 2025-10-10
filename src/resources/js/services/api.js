@@ -126,6 +126,29 @@ export class ClaimAPI {
     static async getClaimsByProduct(productId) {
         return apiRequest(`${this.baseURL}/product/${productId}`)
     }
+
+    // Получить отрендеренный шаблон претензии
+    static async renderClaimTemplate(id) {
+        return apiRequest(`${this.baseURL}/${id}/render`)
+    }
+
+    // Скачать претензию в формате DOCX
+    static async downloadClaim(id) {
+        const token = localStorage.getItem('token')
+        const response = await fetch(`${this.baseURL}/${id}/download`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            }
+        })
+        
+        if (!response.ok) {
+            throw new Error('Ошибка при скачивании претензии')
+        }
+        
+        return response.blob()
+    }
 }
 
 // API сервис для работы с товарами
@@ -412,7 +435,7 @@ export class ClaimTemplateAPI {
     static async renderTemplate(id, data) {
         return apiRequest(`${this.baseURL}/${id}/render`, {
             method: 'POST',
-            body: JSON.stringify({ data })
+            body: JSON.stringify(data)
         })
     }
 

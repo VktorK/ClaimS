@@ -82,6 +82,8 @@ Route::middleware('auth:api')->prefix('claims')->group(function () {
     Route::get('/{id}', [ClaimController::class, 'show']);
     Route::put('/{id}', [ClaimController::class, 'update']);
     Route::delete('/{id}', [ClaimController::class, 'destroy']);
+    Route::get('/{id}/render', [ClaimController::class, 'renderTemplate']);
+    Route::get('/{id}/download', [ClaimController::class, 'downloadClaim']);
 });
 
 // Маршруты для шаблонов претензий
@@ -93,6 +95,7 @@ Route::middleware('auth:api')->prefix('claim-templates')->group(function () {
     Route::put('/{id}', [ClaimTemplateController::class, 'update']);
     Route::delete('/{id}', [ClaimTemplateController::class, 'destroy']);
     Route::post('/{id}/render', [ClaimTemplateController::class, 'render']);
+    Route::get('/{id}/download', [ClaimTemplateController::class, 'download']);
 });
 
 // Публичные маршруты для профилей

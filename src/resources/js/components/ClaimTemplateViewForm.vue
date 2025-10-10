@@ -83,6 +83,9 @@
       </div>
 
       <div class="modal-footer">
+        <button type="button" @click="downloadTemplate" class="btn btn-success">
+          📥 Скачать
+        </button>
         <button type="button" @click="editTemplate" class="btn btn-warning">
           ✏️ Редактировать
         </button>
@@ -180,6 +183,70 @@ export default {
     
     deleteTemplate() {
       this.$emit('delete', this.template)
+    },
+    
+    async downloadTemplate() {
+      if (!this.template?.id) {
+        console.error('Нет ID шаблона для скачивания')
+        return
+      }
+      
+      try {
+        console.log('Скачиваем шаблон через бэкенд...')
+        
+        // Получаем токен из localStorage
+        const token = localStorage.getItem('token')
+        if (!token) {
+          console.error('Токен не найден')
+          return
+        }
+        
+        // Создаем ссылку для скачивания
+        const downloadUrl = `/api/claim-templates/${this.template.id}/download`
+        
+        // Добавляем заголовок авторизации через fetch
+        const response = await fetch(downloadUrl, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+          }
+        })
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        
+        // Получаем blob из ответа
+        const blob = await response.blob()
+        console.log('Blob получен, размер:', blob.size, 'тип:', blob.type)
+        
+        // Создаем URL для blob
+        const blobUrl = URL.createObjectURL(blob)
+        
+        // Создаем ссылку для скачивания
+        const fileName = `${this.template.name || 'template'}.docx`
+        const link = document.createElement('a')
+        link.href = blobUrl
+        link.download = fileName
+        
+        // Добавляем ссылку в DOM, кликаем и удаляем
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        
+        // Освобождаем память
+        URL.revokeObjectURL(blobUrl)
+        
+        console.log(`✅ Шаблон "${this.template.name}" успешно скачан как .docx файл`)
+        
+      } catch (error) {
+        console.error('❌ Ошибка при скачивании шаблона:', error)
+        console.error('Детали ошибки:', error.message)
+        
+        // Fallback: показываем сообщение об ошибке
+        alert('Ошибка при скачивании файла. Попробуйте еще раз.')
+      }
     },
     
     closeModal() {
